@@ -18,7 +18,7 @@
  * See the Licence for the specific language governing 
    permissions and limitations under the Licence. 
  *
- * $Id: ATMDrv.h 3 2012-01-15 16:26:07Z aneto $
+ * $Id$
  *
 **/
 
@@ -36,15 +36,15 @@ static const int ATCAIOCMODULE_UNDEFINED     = -1;
 static const int ATCAIOCMODULE_RECEIVER       = 0;
 static const int ATCAIOCMODULE_TRANSMITTER    = 1;
 
-OBJECT_DLL(AtcaIocDrv)
+OBJECT_DLL(ATCAIocIntDrv)
 
 // Callback declaration
  void ReceiverCallback(void *userData);
 
 /// ATCAIOC Module Class
-class AtcaIocDrv : public GenericAcqModule {
+class ATCAIocIntDrv : public GenericAcqModule {
 
-OBJECT_DLL_STUFF(AtcaIocDrv)
+OBJECT_DLL_STUFF(ATCAIocIntDrv)
 
 /// Receiver CallBack
 friend void ReceiverCallback(void *userData);
@@ -198,10 +198,10 @@ private:
 private:    
 
     /** Copy constructors (since it is defined private it won't allow a public use!!) */
-    AtcaIocDrv(const AtcaIocDrv&){};
+    ATCAIocIntDrv(const ATCAIocIntDrv&){};
 
     /** Operator=  (since it is defined private it won't allow a public use!!) */
-    AtcaIocDrv& operator=(const AtcaIocDrv&){};
+    ATCAIocIntDrv& operator=(const ATCAIocIntDrv&){};
 
     /** Per board file descriptor */
     //   int fd_atca;
@@ -209,10 +209,10 @@ private:
 public:
 
     /** Constructor */
-    AtcaIocDrv();
+    ATCAIocIntDrv();
 
     /** Deconstructor */
-    ~AtcaIocDrv();
+    ~ATCAIocIntDrv();
 
     /** Load Object Parameters from the ConfigurationDataBase */
     virtual bool ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *err);
@@ -226,11 +226,11 @@ public:
     /** Set board used as input */
     virtual bool SetInputBoardInUse(bool on = True) {
         if(moduleType == ATCAIOCMODULE_TRANSMITTER) {
-            AssertErrorCondition(InitialisationError, "AtcaIocDrv::SetInputBoardInUse: Board %s is a Transmitter", Name());
+            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is a Transmitter", Name());
             return False;
         }
         if(inputBoardInUse && on) {
-            AssertErrorCondition(InitialisationError, "AtcaIocDrv::SetInputBoardInUse: Board %s is already in use", Name());
+            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is already in use", Name());
             return False;
         }
         inputBoardInUse  = on;
@@ -241,11 +241,11 @@ public:
     /** Set board used as output */
     virtual bool SetOutputBoardInUse(bool on = True) {
         if(moduleType == ATCAIOCMODULE_RECEIVER) {
-            AssertErrorCondition(InitialisationError, "AtcaIocDrv::SetOutputBoardInUse: Board %s is a Receiver", Name());
+            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is a Receiver", Name());
             return False;
         }
         if(outputBoardInUse && on) {
-            AssertErrorCondition(InitialisationError, "AtcaIocDrv::SetOutputBoardInUse: Board %s is already in use", Name());
+            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is already in use", Name());
             return False;
         }
         inputBoardInUse  = on;

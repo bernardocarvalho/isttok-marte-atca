@@ -18,11 +18,11 @@
  * See the Licence for the specific language governing 
    permissions and limitations under the Licence. 
  *
- * $Id: AtcaIocDrv.cpp 3 2012-01-15 16:26:07Z aneto $
+ * $Id$
  *
 **/
 
-#include "AtcaIocDrv.h"
+#include "ATCAIocIntDrv.h"
 
 #include "Endianity.h"
 #include "CDBExtended.h"
@@ -36,26 +36,27 @@
 #else
 #include "atm_rtai.h"
 #endif
-*/
+
 
 struct AtmMsgHeaderStruct{
     unsigned int nSampleNumber; // the sample number since the last t=0
     unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds
 };
+*/
 
-// Timing AtcaIoc module
-static const int32 timingAtcaIocDrv = 400;
+// Timing ATCAIocInt module
+static const int32 timingATCAIocIntDrv = 400;
 
 /**
  * Enable System Acquisition
  */
-bool AtcaIocDrv::EnableAcquisition(){
+bool ATCAIocIntDrv::EnableAcquisition(){
   // Initialise lastPacketID equal to 0xFFFFFFFF
   lastPacketID = 0xFFFFFFFF;
   // Set the chip on line
-  // open AtcaIoc socket
+  // open ATCAIocInt socket
   if (liveness!=-1){
-    AssertErrorCondition(Warning, "AtcaIocDrv::EnableAcquisition: ATM socket already alive");
+    AssertErrorCondition(Warning, "ATCAIocIntDrv::EnableAcquisition: ATM socket already alive");
     return False;
   }
   return True;
@@ -64,11 +65,11 @@ bool AtcaIocDrv::EnableAcquisition(){
 /**
  * Disable System Acquisition
  */
-bool AtcaIocDrv::DisableAcquisition(){
+bool ATCAIocIntDrv::DisableAcquisition(){
   // Set the chip off line
   // close ATCAIOC socket
   if (liveness==-1){
-    AssertErrorCondition(Warning, "AtcaIocDrv::DisableAcquisition: ATM socket not alive");
+    AssertErrorCondition(Warning, "ATCAIocIntDrv::DisableAcquisition: ATM socket not alive");
     return False;
   }
 
@@ -79,7 +80,7 @@ bool AtcaIocDrv::DisableAcquisition(){
 /*
  * Constructors
  */
-bool  AtcaIocDrv::Init(){
+bool  ATCAIocIntDrv::Init(){
   // Init general parameters
   fileDescriptor                      = 0;
   moduleType                          = ATCAIOCMODULE_UNDEFINED;
@@ -113,26 +114,26 @@ bool  AtcaIocDrv::Init(){
   return True;
 }
 
-AtcaIocDrv::AtcaIocDrv(){
+ATCAIocIntDrv::ATCAIocIntDrv(){
   Init();
 }
 
 /*
  * Destructor
  */
-AtcaIocDrv::~AtcaIocDrv(){
+ATCAIocIntDrv::~ATCAIocIntDrv(){
   keepRunning = False;
   DisableAcquisition();
   if(moduleType == ATCAIOCMODULE_RECEIVER) {
     int counter = 0;
     while((!keepRunning) && (counter++ < 100)) SleepMsec(1);
     if(Threads::IsAlive(threadID)) {
-      AssertErrorCondition(Warning,"AtcaIocDrv::~AtcaIocDrv: %s: Had To Kill Thread %d",Name(), threadID);
+      AssertErrorCondition(Warning,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Had To Kill Thread %d",Name(), threadID);
       Threads::Kill(threadID);
       threadID = 0;
     }
     else{
-      AssertErrorCondition(Information,"AtcaIocDrv::~AtcaIocDrv: %s: Successfully waited for Thread %d to die on its own",Name(), threadID);
+      AssertErrorCondition(Information,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Successfully waited for Thread %d to die on its own",Name(), threadID);
     }
   }
   // Free memory
@@ -145,13 +146,13 @@ AtcaIocDrv::~AtcaIocDrv(){
 /**
  * ObjectLoadSetup
  */
-bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *err){    
+bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *err){    
   // Disable previous opened connections
   DisableAcquisition();
   // Parent class Object load setup
   CDBExtended cdb(info);
   if(!GenericAcqModule::ObjectLoadSetup(info,err)){
-    AssertErrorCondition(InitialisationError,"AtcaIocDrv::ObjectLoadSetup: %s GenericAcqModule::ObjectLoadSetup Failed",Name());
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s GenericAcqModule::ObjectLoadSetup Failed",Name());
     return False;
   }
 
@@ -159,7 +160,7 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
   // Read ModuleType IN/OUT
   FString module;
   if(!cdb.ReadFString(module,"ModuleType")){
-    AssertErrorCondition(InitialisationError,"AtcaIocDrv::ObjectLoadSetup: %s did not specify ModuleType entry",Name());
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify ModuleType entry",Name());
     return False;
   }
   if(module == "InputModule"){
@@ -167,7 +168,7 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
   }else if(module == "OutputModule"){
     moduleType = ATCAIOCMODULE_TRANSMITTER;
   }else{
-    AssertErrorCondition(InitialisationError,"AtcaIocDrv::ObjectLoadSetup: %s unknown module type %s",Name(),module.Buffer());
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s unknown module type %s",Name(),module.Buffer());
     return False;
   }
 
@@ -187,7 +188,7 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
 
   // Read cpu mask
   if(!cdb.ReadInt32(cpuMask, "CpuMask", 0xFFFF)){
-    AssertErrorCondition(Warning,"AtcaIocDrv::ObjectLoadSetup: %s CpuMask was not specified. Using default: %d",Name(),cpuMask);
+    AssertErrorCondition(Warning,"ATCAIocIntDrv::ObjectLoadSetup: %s CpuMask was not specified. Using default: %d",Name(),cpuMask);
   }
 
   // Based on mudule type, init a recv or a send ATCAIOC channel
@@ -198,18 +199,18 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
 
     // Read MaxDataAgeUsec param
     if (!cdb.ReadInt32(maxDataAgeUsec, "MaxDataAgeUsec", 20000)){
-      AssertErrorCondition(Warning,"AtcaIocDrv::ObjectLoadSetup: %s did not specify MaxDataAgeUsec entry. Assuming %i usec" ,Name(),maxDataAgeUsec);
+      AssertErrorCondition(Warning,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify MaxDataAgeUsec entry. Assuming %i usec" ,Name(),maxDataAgeUsec);
     }
     // Read MacNOfLostPackets
     cdb.ReadInt32(maxNOfLostPackets, "MaxNOfLostPackets", 4);
 
     if(cdb.ReadInt32(receiverThreadPriority, "ThreadPriority", 0)) {
       if(receiverThreadPriority > 32 || receiverThreadPriority < 0) {
-	AssertErrorCondition(InitialisationError, "AtcaIocDrv::ObjectLoadSetup: %s ThreadPriority parameter must be <= 32 and >= 0", Name());
+	AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup: %s ThreadPriority parameter must be <= 32 and >= 0", Name());
 	return False;
       }
     } else {
-      AssertErrorCondition(Warning, "AtcaIocDrv::ObjectLoadSetup: %s ThreadPriority parameter not specified", Name());
+      AssertErrorCondition(Warning, "ATCAIocIntDrv::ObjectLoadSetup: %s ThreadPriority parameter not specified", Name());
     }
 
     if(!cdb.ReadInt32(numberOfInputChannels, "NumberOfInput")){
@@ -218,14 +219,14 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
     }
 	
     packetByteSize = DMA_SIZE;
-    /// Read the UsecPeriod of the AtcaIoc packet producer
+    /// Read the UsecPeriod of the ATCAIocInt packet producer
     //        cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
 
     // Create Data Buffers. Compute total size and allocate storing buffer 
     //        for(int i=0 ; i < nOfDataBuffers ; i++){
     dataBuffer = (uint32 *)malloc(packetByteSize);//numberOfInputChannels*sizeof(int));
     if(dataBuffer == NULL){
-      AssertErrorCondition(InitialisationError,"AtcaIocDrv::ObjectLoadSetup: %s AtcaIoc dataBuffer allocation failed",Name());
+      AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s ATCAIocInt dataBuffer allocation failed",Name());
       return False;
     }
 
@@ -251,19 +252,19 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
 
   keepRunning = False;
   FString threadName = Name();
-  threadName += "AtcaIocHandler";
+  threadName += "ATCAIocIntHandler";
   if(moduleType == ATCAIOCMODULE_RECEIVER) {
     threadID = Threads::BeginThread((ThreadFunctionType)ReceiverCallback, (void*)this, THREADS_DEFAULT_STACKSIZE, threadName.Buffer(), XH_NotHandled, cpuMask);
     int counter = 0;
     while((!keepRunning)&&(counter++ < 100)) SleepMsec(1);
     if(!keepRunning) {
-      AssertErrorCondition(InitialisationError, "AtcaIocDrv::ObjectLoadSetup: ReceiverCallback failed to start");
+      AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup: ReceiverCallback failed to start");
       return False;
     }
   }
 
   // Tell user the initialization phase is done
-  AssertErrorCondition(Information,"AtcaIocDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s, type %d",Name(), deviceFile.Buffer(), moduleType);
+  AssertErrorCondition(Information,"ATCAIocIntDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s, type %d",Name(), deviceFile.Buffer(), moduleType);
 
   return True;
 }
@@ -271,17 +272,17 @@ bool AtcaIocDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *er
 /**
  * GetData
  */
-int32 AtcaIocDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber) {
+int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber) {
 
   // Check module type
   if(moduleType!=ATCAIOCMODULE_RECEIVER) {
-    AssertErrorCondition(FatalError,"AtcaIocDrv::GetData: %s is not a receving module on fd %d",Name(), fileDescriptor);
+    AssertErrorCondition(FatalError,"ATCAIocIntDrv::GetData: %s is not a receving module on fd %d",Name(), fileDescriptor);
     return -1;
   }
 
   // check if buffer is allocated
   if(buffer == NULL) {
-    AssertErrorCondition(FatalError,"AtcaIocDrv::GetData: %s. The DDInterface buffer is NULL.",Name());
+    AssertErrorCondition(FatalError,"ATCAIocIntDrv::GetData: %s. The DDInterface buffer is NULL.",Name());
     return -1;
   }
 
@@ -337,16 +338,16 @@ int32 AtcaIocDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber) {
 /**
  * WriteData
  */
-bool AtcaIocDrv::WriteData(uint32 usecTime, const int32 *buffer){
+bool ATCAIocIntDrv::WriteData(uint32 usecTime, const int32 *buffer){
   // check module type
   if(moduleType!=ATCAIOCMODULE_TRANSMITTER){
-    AssertErrorCondition(FatalError,"AtcaIocDrv::WriteData: %s is not a transmitter module ",Name());
+    AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s is not a transmitter module ",Name());
     return False;
   }
   // NOT implemented yet
   // check if buffer is not allocated
   if(buffer == NULL){
-    AssertErrorCondition(FatalError,"AtcaIocDrv::WriteData: %s. The DDInterface buffer is NULL.",Name());
+    AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s. The DDInterface buffer is NULL.",Name());
     return False;
   }
   /*
@@ -357,7 +358,7 @@ bool AtcaIocDrv::WriteData(uint32 usecTime, const int32 *buffer){
   int _ret;
   _ret = send(atmSocket, outputPacket, size, 0);
   if(_ret == -1){
-    AssertErrorCondition(FatalError,"AtcaIocDrv::WriteData: %s. Send socket error",Name());
+    AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s. Send socket error",Name());
     return False;
   }
   */
@@ -367,7 +368,7 @@ bool AtcaIocDrv::WriteData(uint32 usecTime, const int32 *buffer){
 /**
  * InputDump
  */ 
-bool AtcaIocDrv::InputDump(StreamInterface &s) const {
+bool ATCAIocIntDrv::InputDump(StreamInterface &s) const {
   // Checks for the I/O type
   if(moduleType != ATCAIOCMODULE_RECEIVER) {
     s.Printf("%s is not an Input module\n", Name());
@@ -381,7 +382,7 @@ bool AtcaIocDrv::InputDump(StreamInterface &s) const {
 /**
  * OutputDump
  */ 
-bool AtcaIocDrv::OutputDump(StreamInterface &s) const{
+bool ATCAIocIntDrv::OutputDump(StreamInterface &s) const{
   // Checks for the I/O type
   if(moduleType != ATCAIOCMODULE_TRANSMITTER){
     s.Printf("%s is not an Output module\n",Name());
@@ -395,11 +396,11 @@ bool AtcaIocDrv::OutputDump(StreamInterface &s) const{
 /**
  * GetUsecTime
  */
-int64 AtcaIocDrv::GetUsecTime(){
+int64 ATCAIocIntDrv::GetUsecTime(){
 
   // Check module type
   if (moduleType!=ATCAIOCMODULE_RECEIVER){
-    AssertErrorCondition(FatalError,"GetUsecTime:This method can only be called an input AtcaIoc channel");
+    AssertErrorCondition(FatalError,"GetUsecTime:This method can only be called an input ATCAIocInt channel");
     return 0xFFFFFFFF;
   }
 
@@ -413,7 +414,7 @@ int64 AtcaIocDrv::GetUsecTime(){
 /**
  * ObjectDescription
  */
-bool AtcaIocDrv::ObjectDescription(StreamInterface &s, bool full, StreamInterface *err){
+bool ATCAIocIntDrv::ObjectDescription(StreamInterface &s, bool full, StreamInterface *err){
   s.Printf("%s %s\n",ClassName(),Version());
   // Module name
   s.Printf("Module Name --> %s\n",Name());
@@ -432,7 +433,7 @@ bool AtcaIocDrv::ObjectDescription(StreamInterface &s, bool full, StreamInterfac
   default:
     s.Printf("ATACType --> UNDEFINED");
   }
-  //  if(vci == timingAtcaIocDrv) s.Printf("\nThis is even a Time Module");
+  //  if(vci == timingATCAIocIntDrv) s.Printf("\nThis is even a Time Module");
   return True;
 }
 
@@ -440,7 +441,7 @@ bool AtcaIocDrv::ObjectDescription(StreamInterface &s, bool full, StreamInterfac
  * Receiver CallBack
  */
 void ReceiverCallback(void* userData){
-  AtcaIocDrv *p = (AtcaIocDrv*)userData;   
+  ATCAIocIntDrv *p = (ATCAIocIntDrv*)userData;   
   p->RecCallback(userData);
 }
 
@@ -448,7 +449,7 @@ void ReceiverCallback(void* userData){
 /**
  * RecCallback
  */
-void AtcaIocDrv::RecCallback(void* arg){
+void ATCAIocIntDrv::RecCallback(void* arg){
 
   // Set Thread priority
   if(receiverThreadPriority) {
@@ -459,7 +460,7 @@ void AtcaIocDrv::RecCallback(void* arg){
   // Allocate
   int32 *dataSource;
   if((dataSource = (int32 *)malloc(packetByteSize)) == NULL) {
-    AssertErrorCondition(FatalError, "AtcaIocDrv::RecCallback: unable to allocate buffer on receiver thread exiting");
+    AssertErrorCondition(FatalError, "ATCAIocIntDrv::RecCallback: unable to allocate buffer on receiver thread exiting");
     return;
   }
   keepRunning = True;	
@@ -472,12 +473,12 @@ void AtcaIocDrv::RecCallback(void* arg){
     int64 currentCounterTime = HRT::HRTCounter();
     if(currentCounterTime - lastCounterTime > oneMinCounterTime) {
       if(sizeMismatchErrorCounter > 0) {
-	AssertErrorCondition(FatalError, "AtcaIocDrv::RecCallback: ATM Wrong packet size  [occured %i times]", 
+	AssertErrorCondition(FatalError, "ATCAIocIntDrv::RecCallback: ATM Wrong packet size  [occured %i times]", 
 			     sizeMismatchErrorCounter);
 	sizeMismatchErrorCounter = 0;
       }
       if(deviationErrorCounter > 0) {
-	AssertErrorCondition(Warning, "AtcaIocDrv::RecCallback: %s: Data arrival period mismatch with specified producer period [occured %i times]", Name(),  deviationErrorCounter);
+	AssertErrorCondition(Warning, "ATCAIocIntDrv::RecCallback: %s: Data arrival period mismatch with specified producer period [occured %i times]", Name(),  deviationErrorCounter);
 	deviationErrorCounter = 0;
       }
       if(rolloverErrorCounter > 0) {
@@ -497,7 +498,7 @@ void AtcaIocDrv::RecCallback(void* arg){
 	recoveryCounter = 0;
       }
       if(previousPacketTooOldErrorCounter > 0) {
-	AssertErrorCondition(Warning,"AtcaIocDrv::GetData: %s:  Data too old [occured %i times]",Name(),
+	AssertErrorCondition(Warning,"ATCAIocIntDrv::GetData: %s:  Data too old [occured %i times]",Name(),
 			     previousPacketTooOldErrorCounter);
 	previousPacketTooOldErrorCounter = 0;
       }
@@ -508,7 +509,7 @@ void AtcaIocDrv::RecCallback(void* arg){
     int _ret = read(fileDescriptor, dataBuffer, packetByteSize);
     //    int _ret = read(fileDescriptor, dataSource, packetByteSize, 0);
     if(_ret == -1) {
-      AssertErrorCondition(FatalError,"AtcaIocDrv::RecCallback: Socket recv error");
+      AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: Socket recv error");
       return;
     }
 
@@ -576,7 +577,7 @@ void AtcaIocDrv::RecCallback(void* arg){
     lastPacketID       = header->nSampleNumber;
     lastPacketUsecTime = header->nSampleTime;
 
-    // If the module is the timingAtcaIocDrv call the Trigger() method of
+    // If the module is the timingATCAIocIntDrv call the Trigger() method of
     // the time service object
     for(int i = 0 ; i < nOfTriggeringServices ; i++) {
       triggerService[i].Trigger();
@@ -586,13 +587,13 @@ void AtcaIocDrv::RecCallback(void* arg){
   keepRunning = True;	
 }
 
-bool AtcaIocDrv::ProcessHttpMessage(HttpStream &hStream) {
+bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
   hStream.SSPrintf("OutputHttpOtions.Content-Type","text/html");
   hStream.keepAlive = False;
   //copy to the client
   hStream.WriteReplyHeader(False);
 
-  hStream.Printf("<html><head><title>LinuxAtcaIocDrv</title></head>\n");
+  hStream.Printf("<html><head><title>LinuxATCAIocIntDrv</title></head>\n");
   hStream.Printf("<body>\n");
   /*
   hStream.Printf("<h1 align=\"center\">%s</h1>\n", Name());
@@ -664,4 +665,4 @@ bool AtcaIocDrv::ProcessHttpMessage(HttpStream &hStream) {
   hStream.Printf("</body></html>\n");
 
 }
-OBJECTLOADREGISTER(AtcaIocDrv, "$Id: AtcaIocDrv.cpp 3 2012-01-15 16:26:07Z bcarvalho $")
+OBJECTLOADREGISTER(ATCAIocIntDrv, "$Id$")

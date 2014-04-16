@@ -3,9 +3,9 @@
  * IOCTL Definitions for the Linux Device Driver
  *
  * SVN keywords
- * $Date: 2013-05-27 14:06:26 +0100 (Mon, 27 May 2013) $
- * $Revision: 4894 $
- * $URL: http://metis.ipfn.ist.utl.pt/svn/cdaq/ATCA/ATCA-IO-CONTROL/IPP/ADC_INTEGRATORS/Software/trunk/include/atca-ioc-int-ioctl.h $
+ * $Date$
+ * $Revision$
+ * $URL$
  *
  */
 

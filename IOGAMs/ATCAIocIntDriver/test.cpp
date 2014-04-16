@@ -18,7 +18,7 @@
  * See the Licence for the specific language governing 
    permissions and limitations under the Licence. 
  *
- * $Id: test.cpp 3 2012-01-15 16:26:07Z aneto $
+ * $Id$
  *
 **/
 
@@ -28,7 +28,7 @@
 #include "GlobalObjectDataBase.h"
 #include "Console.h"
 #include "LoggerService.h"
-#include "AtcaIocDrv.h"
+#include "ATCAIocIntDrv.h"
 
 #include "ConfigurationDataBase.h"
 #include "CDBExtended.h"
@@ -55,7 +55,7 @@ char remoteLoggerAddress[] = "127.0.0.1";
 bool _keepRunning;
 
 int atca_thread(void* atca){
-	AtcaIocDrv* atcadrv = (AtcaIocDrv*) atca;
+	ATCAIocIntDrv* atcadrv = (ATCAIocIntDrv*) atca;
 	char* buffer = (char*)malloc((atcadrv->NumberOfInputs())*4);
 	if(buffer==NULL){
 		printf("malloc null %d \n",(atcadrv->NumberOfInputs())*4);
@@ -71,21 +71,21 @@ int atca_thread(void* atca){
 bool Start(StreamInterface &in,StreamInterface &out,void *userData){
 
 	LoadableLibrary ll;
-	if(!ll.Open("AtcaIocDrv.gam")){
+	if(!ll.Open("ATCAIocIntDrv.gam")){
 		printf("can't load gam\n");
 		return False;
 	}
 	
 	// this flick the ncurses window 
-	Object *o = OBJObjectCreateByName("AtcaIocDrv");
+	Object *o = OBJObjectCreateByName("ATCAIocIntDrv");
 	if(o == NULL){
 		printf("can't create obj\n");
 		return False;
 	}
 
-	AtcaIocDrv* atcadrv = dynamic_cast<AtcaIocDrv*>(o);
+	ATCAIocIntDrv* atcadrv = dynamic_cast<ATCAIocIntDrv*>(o);
 	if(atcadrv == NULL){
-		printf("can't create AtcaIoc drv object\n");
+		printf("can't create ATCAIocInt drv object\n");
 		return False;
 	}
 	File config;

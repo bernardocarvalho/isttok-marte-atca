@@ -19,7 +19,7 @@
 # See the Licence for the specific language governing 
 # permissions and limitations under the Licence. 
 #
-# $Id: Makefile.inc 3 2012-01-15 16:26:07Z aneto $
+# $Id$
 #
 #############################################################
 OBJSX=
@@ -41,7 +41,7 @@ CFLAGS+= -I../../BaseLib2/Level6
 CFLAGS+= -I../../BaseLib2/LoggerService
 
 all: $(OBJS) \
-	$(TARGET)/AtcaIocDrv$(GAMEXT)  \
+	$(TARGET)/ATCAIocIntDrv$(GAMEXT)  \
 	$(TARGET)/test$(EXEEXT)
 	echo  $(OBJS)
 
