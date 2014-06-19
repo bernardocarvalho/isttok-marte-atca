@@ -24,17 +24,17 @@
 
 #if !defined (_ATCAIOC_DRV)
 #define _ATCAIOC_DRV
-#define MAX_SDU		4096
+//#define MAX_SDU		4096
 
 #include "System.h"
 #include "GenericAcqModule.h"
 
 /// Number buffers for data storage
-//static const int nOfDataBuffers = 3;
+static const int nOfDataBuffers = 3;
 /// ATCAIOC Module type constants
-static const int ATCAIOCMODULE_UNDEFINED     = -1;
-static const int ATCAIOCMODULE_RECEIVER       = 0;
-static const int ATCAIOCMODULE_TRANSMITTER    = 1;
+/* static const int ATCAIOCMODULE_UNDEFINED     = -1; */
+/* static const int ATCAIOCMODULE_RECEIVER       = 0; */
+/* static const int ATCAIOCMODULE_TRANSMITTER    = 1; */
 
 OBJECT_DLL(ATCAIocIntDrv)
 
@@ -50,15 +50,40 @@ OBJECT_DLL_STUFF(ATCAIocIntDrv)
 friend void ReceiverCallback(void *userData);
 
 private:
+
+/** device name **/ 
+  FString deviceFileName;
+
 /** The file descriptor associated to this board*/
- int fileDescriptor;
+ int devFd;
+
+ /** Module Identifier */
+ int32        moduleIdentifier;
+
+ /** Number of Analogue Input channels for this module (Maximum 32)*/
+ int32        numberOfAnalogueInputChannels;
+
+ /** Number of Digital Input channels for this module  (1 or 0)    */
+ int32        numberOfDigitalInputChannels;
+
+ /** Number of Analogue Output channels                (Maximum 8) */
+ int32        numberOfAnalogueOutputChannels;
+
+ /** Number of Digital Output channels                 ()          */
+ int32        numberOfDigitalOutputChannels;
+
+ /** Returns the sum of analogue and digital input channels */
+ int32 NumberOfInputChannels(){
+   return numberOfDigitalInputChannels + numberOfAnalogueInputChannels;
+ }
+ 
 
     /**   GAM Type (Input/Output)
           -1 --> ATCAIOCMODULE_UNDEFINED
            0 --> ATCAIOCMODULE_RECEIVER      (DDBOutputInterface)
            1 --> ATCAIOCMODULE_TRANSMITTER   (DDBInputInterface)
     */
-    int32                  moduleType;
+ //int32                  moduleType;
 
     /**   Input/Output Buffer Size in Byte */
     int32                  packetByteSize;
@@ -77,16 +102,16 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 private:
 
-    /** buffer for receiver type module */
-    uint32                   *dataBuffer;
+    /** Triple buffer for receiver type module */
+    uint32                 *dataBuffer[nOfDataBuffers];
 
     /** Index of the write only buffer.
         The next write only buffer index is equal to (writeBuffer+1)%3
         The read only buffer index is equal to (writeBuffer+2)%3 */
-    //    int32                   writeBuffer;
+    int32                   writeBuffer;
     
     /** */
-    //int32                   globalReadBuffer;
+    int32                   globalReadBuffer;
 
     /** Max data age in usec. It is used to decided if the read data are ready or not */
     int32                  maxDataAgeUsec;
@@ -225,10 +250,10 @@ public:
 
     /** Set board used as input */
     virtual bool SetInputBoardInUse(bool on = True) {
-        if(moduleType == ATCAIOCMODULE_TRANSMITTER) {
-            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is a Transmitter", Name());
-            return False;
-        }
+        /* if(moduleType == ATCAIOCMODULE_TRANSMITTER) { */
+        /*     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is a Transmitter", Name()); */
+        /*     return False; */
+        /* } */
         if(inputBoardInUse && on) {
             AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is already in use", Name());
             return False;
@@ -240,10 +265,10 @@ public:
 
     /** Set board used as output */
     virtual bool SetOutputBoardInUse(bool on = True) {
-        if(moduleType == ATCAIOCMODULE_RECEIVER) {
-            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is a Receiver", Name());
-            return False;
-        }
+        /* if(moduleType == ATCAIOCMODULE_RECEIVER) { */
+        /*     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is a Receiver", Name()); */
+        /*     return False; */
+        /* } */
         if(outputBoardInUse && on) {
             AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is already in use", Name());
             return False;

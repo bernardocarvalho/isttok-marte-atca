@@ -30,6 +30,8 @@
 #include "atca-ioc-int.h"
 #include "atca-ioc-int-ioctl.h"
 
+#define _FAKE_DEV
+
 /*
 #ifndef _RTAI
 #include <linux/atm.h>
@@ -54,11 +56,19 @@ bool ATCAIocIntDrv::EnableAcquisition(){
   // Initialise lastPacketID equal to 0xFFFFFFFF
   lastPacketID = 0xFFFFFFFF;
   // Set the chip on line
-  // open ATCAIocInt socket
+
   if (liveness!=-1){
     AssertErrorCondition(Warning, "ATCAIocIntDrv::EnableAcquisition: ATM socket already alive");
     return False;
   }
+  devFd = open(deviceFileName.Buffer(), O_RDWR);
+  if(devFd < 1){
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::EnableAcquisition: %s: Could not open device node: %s",Name(), deviceFileName.Buffer());
+    return False;
+  }
+  // open here ATCAIocInt device
+  //fd=open()
+  liveness++;
   return True;
 }
 
@@ -72,8 +82,8 @@ bool ATCAIocIntDrv::DisableAcquisition(){
     AssertErrorCondition(Warning, "ATCAIocIntDrv::DisableAcquisition: ATM socket not alive");
     return False;
   }
-
-  liveness=-1;
+  //close(fd) ...
+  liveness--;
   return True;
 }
 
@@ -82,13 +92,18 @@ bool ATCAIocIntDrv::DisableAcquisition(){
  */
 bool  ATCAIocIntDrv::Init(){
   // Init general parameters
-  fileDescriptor                      = 0;
-  moduleType                          = ATCAIOCMODULE_UNDEFINED;
+  devFd                                   = 0;
+  moduleIdentifier                        = 0;
+  numberOfAnalogueInputChannels           = 0;
+  numberOfDigitalInputChannels            = 0;
+  numberOfAnalogueOutputChannels          = 0;
+  numberOfDigitalOutputChannels           = 0;
+//moduleType                          = ATCAIOCMODULE_UNDEFINED;
   mux.Create();
   packetByteSize                      = 0;
   // Init receiver parameters
-  //writeBuffer                         = 0;
-  //    globalReadBuffer                    = 0;
+  writeBuffer                         = 0;
+  globalReadBuffer                    = 0;
   sizeMismatchErrorCounter            = 0;
   previousPacketTooOldErrorCounter    = 0;
   deviationErrorCounter               = 0;
@@ -124,7 +139,7 @@ ATCAIocIntDrv::ATCAIocIntDrv(){
 ATCAIocIntDrv::~ATCAIocIntDrv(){
   keepRunning = False;
   DisableAcquisition();
-  if(moduleType == ATCAIOCMODULE_RECEIVER) {
+  //if(moduleType == ATCAIOCMODULE_RECEIVER) {
     int counter = 0;
     while((!keepRunning) && (counter++ < 100)) SleepMsec(1);
     if(Threads::IsAlive(threadID)) {
@@ -135,11 +150,11 @@ ATCAIocIntDrv::~ATCAIocIntDrv(){
     else{
       AssertErrorCondition(Information,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Successfully waited for Thread %d to die on its own",Name(), threadID);
     }
-  }
+    //}
   // Free memory
-  if(dataBuffer != NULL){
-    free((void *&)dataBuffer);
-  }
+    for(int i = 0 ; i < nOfDataBuffers ; i++) {
+      if(dataBuffer[i] != NULL)free((void *&)dataBuffer[i]);
+    }        
 
 }
 
@@ -158,31 +173,25 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
 
 
   // Read ModuleType IN/OUT
-  FString module;
-  if(!cdb.ReadFString(module,"ModuleType")){
-    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify ModuleType entry",Name());
-    return False;
-  }
-  if(module == "InputModule"){
-    moduleType = ATCAIOCMODULE_RECEIVER;
-  }else if(module == "OutputModule"){
-    moduleType = ATCAIOCMODULE_TRANSMITTER;
-  }else{
-    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s unknown module type %s",Name(),module.Buffer());
+  // FString module;
+  // if(!cdb.ReadFString(module,"ModuleType")){
+  //   AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify ModuleType entry",Name());
+  //   return False;
+  // }
+  // if(module == "InputModule"){
+  //   moduleType = ATCAIOCMODULE_RECEIVER;
+  // }else if(module == "OutputModule"){
+  //   moduleType = ATCAIOCMODULE_TRANSMITTER;
+  // }else{
+  //   AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s unknown module type %s",Name(),module.Buffer());
+  //   return False;
+  // }
+
+  if(!cdb.ReadFString(deviceFileName,"DeviceFileName")){
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s: DeviceFileName has to be specified",Name());
     return False;
   }
 
-  FString deviceFile;
-  if(!cdb.ReadFString(deviceFile,"DeviceFile")){
-    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s: DeviceFile location has to be specified",Name());
-    return False;
-  }
-
-  fileDescriptor = open(deviceFile.Buffer(), O_RDWR);
-  if(fileDescriptor < 1){
-    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s: Could not open device driver at: %s",Name(), deviceFile.Buffer());
-    return False;
-  }
 
   cpuMask = 0xFFFF;
 
@@ -192,7 +201,7 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
   }
 
   // Based on mudule type, init a recv or a send ATCAIOC channel
-  if(moduleType == ATCAIOCMODULE_RECEIVER){
+  //if(moduleType == ATCAIOCMODULE_RECEIVER){
     /////////////////////////
     // Input Module (recv) //
     /////////////////////////
@@ -200,7 +209,7 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     // Read MaxDataAgeUsec param
     if (!cdb.ReadInt32(maxDataAgeUsec, "MaxDataAgeUsec", 20000)){
       AssertErrorCondition(Warning,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify MaxDataAgeUsec entry. Assuming %i usec" ,Name(),maxDataAgeUsec);
-    }
+      //}
     // Read MacNOfLostPackets
     cdb.ReadInt32(maxNOfLostPackets, "MaxNOfLostPackets", 4);
 
@@ -223,37 +232,39 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     //        cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
 
     // Create Data Buffers. Compute total size and allocate storing buffer 
-    //        for(int i=0 ; i < nOfDataBuffers ; i++){
-    dataBuffer = (uint32 *)malloc(packetByteSize);//numberOfInputChannels*sizeof(int));
-    if(dataBuffer == NULL){
-      AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s ATCAIocInt dataBuffer allocation failed",Name());
-      return False;
+    for(int i=0 ; i < nOfDataBuffers ; i++){
+      dataBuffer[i] = (uint32 *)malloc(packetByteSize);//numberOfInputChannels*sizeof(int));
+      if(dataBuffer[i] == NULL){
+	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s ATCAIocInt dataBuffer allocation failed",Name());
+	return False;
+      }
+
+    // TODO Initialize the triple buffer
+      //uint32 *tempData = dataBuffer[i];
+      //for(int j = 0 ; j < numberOfInputChannels ; j++) {
+      //tempData[j] = 0;
+      //}
+    
     }
+    //    packetByteSize = numberOfInputChannels*sizeof(int32);
 
-    /*            // Initialize the triple buffer
-		  uint32 *tempData = dataBuffer[i];
-		  for(int j = 0 ; j < numberOfInputChannels ; j++) {
-		  tempData[j] = 0;
-		  }
-    */
-    //  }
-    packetByteSize = numberOfInputChannels*sizeof(int32);
-
-  } else if(moduleType == ATCAIOCMODULE_TRANSMITTER) {
+  }
+  /* else if(moduleType == ATCAIOCMODULE_TRANSMITTER) {
     //////////////////////////
     // Output Module (send) //
     //////////////////////////
     // NOt yet implemented
   }
+  */
   if(!EnableAcquisition()) {
-    AssertErrorCondition(InitialisationError, "ATMDrv::ObjectLoadSetup Failed Enabling Acquisition");
+    AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup Failed Enabling Acquisition");
     return False;
   }
 
   keepRunning = False;
   FString threadName = Name();
   threadName += "ATCAIocIntHandler";
-  if(moduleType == ATCAIOCMODULE_RECEIVER) {
+  //  if(moduleType == ATCAIOCMODULE_RECEIVER) {
     threadID = Threads::BeginThread((ThreadFunctionType)ReceiverCallback, (void*)this, THREADS_DEFAULT_STACKSIZE, threadName.Buffer(), XH_NotHandled, cpuMask);
     int counter = 0;
     while((!keepRunning)&&(counter++ < 100)) SleepMsec(1);
@@ -261,10 +272,10 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup: ReceiverCallback failed to start");
       return False;
     }
-  }
+    //}
 
   // Tell user the initialization phase is done
-  AssertErrorCondition(Information,"ATCAIocIntDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s, type %d",Name(), deviceFile.Buffer(), moduleType);
+  AssertErrorCondition(Information,"ATCAIocIntDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s",Name(), deviceFileName.Buffer());
 
   return True;
 }
@@ -275,10 +286,10 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
 int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber) {
 
   // Check module type
-  if(moduleType!=ATCAIOCMODULE_RECEIVER) {
-    AssertErrorCondition(FatalError,"ATCAIocIntDrv::GetData: %s is not a receving module on fd %d",Name(), fileDescriptor);
-    return -1;
-  }
+  // if(moduleType!=ATCAIOCMODULE_RECEIVER) {
+  //    AssertErrorCondition(FatalError,"ATCAIocIntDrv::GetData: %s is not a receving module on fd %d",Name(), fileDescriptor);
+  //return -1;
+  //}
 
   // check if buffer is allocated
   if(buffer == NULL) {
@@ -290,15 +301,15 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // used to update globalReadBuffer, it is not being
   // changed in the receiver thread callback
   while(!mux.FastTryLock());
-  /* 
+
  // Update readBuffer index
   globalReadBuffer = writeBuffer - 1;
   if(globalReadBuffer < 0) {
     globalReadBuffer = nOfDataBuffers-1;
   }
   // Gets the last acquired data buffer
-  uint32 *lastReadBuffer     = dataBuffer[globalReadBuffer];
-  AtmMsgHeaderStruct *header = (AtmMsgHeaderStruct *)lastReadBuffer;
+  uint32 * lastReadBuffer     = dataBuffer[globalReadBuffer];
+  /*   AtmMsgHeaderStruct *header = (AtmMsgHeaderStruct *)lastReadBuffer;
   // Check data age
   uint32 sampleNo = header->nSampleNumber;
   if(freshPacket) {
@@ -314,8 +325,6 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
     previousPacketTooOldErrorCounter++;
   }
   */
-  // int rc;
-  //rc = read(fileDescriptor, dataBuffer, DMA_SIZE);
 
   // Give back lock
   mux.FastUnLock();
@@ -340,16 +349,16 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
  */
 bool ATCAIocIntDrv::WriteData(uint32 usecTime, const int32 *buffer){
   // check module type
-  if(moduleType!=ATCAIOCMODULE_TRANSMITTER){
-    AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s is not a transmitter module ",Name());
-    return False;
-  }
+  //  if(moduleType!=ATCAIOCMODULE_TRANSMITTER){
+  AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s is not a transmitter module ",Name());
+  return False;
+  // }
   // NOT implemented yet
   // check if buffer is not allocated
-  if(buffer == NULL){
-    AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s. The DDInterface buffer is NULL.",Name());
-    return False;
-  }
+  // if(buffer == NULL){
+  //   AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s. The DDInterface buffer is NULL.",Name());
+  //   return False;
+  // }
   /*
   // Set the packet content - does endianity swap
   int size = packetByteSize;
@@ -370,18 +379,18 @@ bool ATCAIocIntDrv::WriteData(uint32 usecTime, const int32 *buffer){
  */ 
 bool ATCAIocIntDrv::InputDump(StreamInterface &s) const {
   // Checks for the I/O type
-  if(moduleType != ATCAIOCMODULE_RECEIVER) {
-    s.Printf("%s is not an Input module\n", Name());
-    return False;
-  }
+  // if(moduleType != ATCAIOCMODULE_RECEIVER) {
+  //   s.Printf("%s is not an Input module\n", Name());
+  //   return False;
+  // }
   // Prints some usefull informations about the input board
-  //  s.Printf("%s - ATCAIOC board attached at VCI #%d\n",Name(),vci);
+  s.Printf("%s - ATCAIOC board attached at  #s\n", Name(),deviceFileName.Buffer());
   return True;
 }
 
 /**
  * OutputDump
- */ 
+
 bool ATCAIocIntDrv::OutputDump(StreamInterface &s) const{
   // Checks for the I/O type
   if(moduleType != ATCAIOCMODULE_TRANSMITTER){
@@ -392,6 +401,7 @@ bool ATCAIocIntDrv::OutputDump(StreamInterface &s) const{
   //s.Printf("%s - ATM board attached at VCI #%d\n\n",Name(),vci);
   return True;
 }
+ */ 
 
 /**
  * GetUsecTime
@@ -399,10 +409,10 @@ bool ATCAIocIntDrv::OutputDump(StreamInterface &s) const{
 int64 ATCAIocIntDrv::GetUsecTime(){
 
   // Check module type
-  if (moduleType!=ATCAIOCMODULE_RECEIVER){
-    AssertErrorCondition(FatalError,"GetUsecTime:This method can only be called an input ATCAIocInt channel");
-    return 0xFFFFFFFF;
-  }
+  // if (moduleType!=ATCAIOCMODULE_RECEIVER){
+  //   AssertErrorCondition(FatalError,"GetUsecTime:This method can only be called an input ATCAIocInt channel");
+  //   return 0xFFFFFFFF;
+  // }
 
   if(producerUsecPeriod != -1) {
     return ((int64)originalNSampleNumber*(int64)producerUsecPeriod);
@@ -423,16 +433,16 @@ bool ATCAIocIntDrv::ObjectDescription(StreamInterface &s, bool full, StreamInter
 //  s.Printf("MaxDataAgeUsec           = %d\n",maxDataAgeUsec);
   s.Printf("MaxNOfLostPackets        = %d\n",maxNOfLostPackets);
   // VCI Type
-  switch (moduleType){
-  case 0:
-    s.Printf("ATCA Type --> RECEIVER");
-    break;
-  case 1:
-    s.Printf("ATCAType --> TRANSMITTER");
-    break;
-  default:
-    s.Printf("ATACType --> UNDEFINED");
-  }
+  // switch (moduleType){
+  // case 0:
+  //   s.Printf("ATCA Type --> RECEIVER");
+  //   break;
+  // case 1:
+  //   s.Printf("ATCAType --> TRANSMITTER");
+  //   break;
+  // default:
+  //   s.Printf("ATACType --> UNDEFINED");
+  // }
   //  if(vci == timingATCAIocIntDrv) s.Printf("\nThis is even a Time Module");
   return True;
 }
@@ -473,43 +483,45 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     int64 currentCounterTime = HRT::HRTCounter();
     if(currentCounterTime - lastCounterTime > oneMinCounterTime) {
       if(sizeMismatchErrorCounter > 0) {
-	AssertErrorCondition(FatalError, "ATCAIocIntDrv::RecCallback: ATM Wrong packet size  [occured %i times]", 
+	AssertErrorCondition(FatalError, "ATCAIocIntDrv::RecCallback: ATCA Wrong packet size  [occured %i times]", 
 			     sizeMismatchErrorCounter);
 	sizeMismatchErrorCounter = 0;
       }
-      if(deviationErrorCounter > 0) {
-	AssertErrorCondition(Warning, "ATCAIocIntDrv::RecCallback: %s: Data arrival period mismatch with specified producer period [occured %i times]", Name(),  deviationErrorCounter);
-	deviationErrorCounter = 0;
-      }
-      if(rolloverErrorCounter > 0) {
-	AssertErrorCondition(Warning,"Lost more than %d packets after a reset on [occured %i times]",maxNOfLostPackets, rolloverErrorCounter);
-	rolloverErrorCounter = 0;
-      }
-      if(lostPacketErrorCounterAux > 0) {
-	AssertErrorCondition(Warning, "packets lost on  [occured %i times]",  lostPacketErrorCounterAux);
-	lostPacketErrorCounterAux = 0;
-      }
-      if(samePacketErrorCounter > 0) {
-	AssertErrorCondition(Warning, "nSampleNumber unchanged in  [occured %i times]",  samePacketErrorCounter);
-	samePacketErrorCounter = 0;
-      }
-      if(recoveryCounter > 0) {
-	AssertErrorCondition(Information, "Re-established correct packets sequence on  [occured %i times]",  recoveryCounter);
-	recoveryCounter = 0;
-      }
-      if(previousPacketTooOldErrorCounter > 0) {
-	AssertErrorCondition(Warning,"ATCAIocIntDrv::GetData: %s:  Data too old [occured %i times]",Name(),
-			     previousPacketTooOldErrorCounter);
-	previousPacketTooOldErrorCounter = 0;
-      }
+      // if(deviationErrorCounter > 0) {
+      // 	AssertErrorCondition(Warning, "ATCAIocIntDrv::RecCallback: %s: Data arrival period mismatch with specified producer period [occured %i times]", Name(),  deviationErrorCounter);
+      // 	deviationErrorCounter = 0;
+      // }
+      // if(rolloverErrorCounter > 0) {
+      // 	AssertErrorCondition(Warning,"Lost more than %d packets after a reset on [occured %i times]",maxNOfLostPackets, rolloverErrorCounter);
+      // 	rolloverErrorCounter = 0;
+      // }
+      // if(lostPacketErrorCounterAux > 0) {
+      // 	AssertErrorCondition(Warning, "packets lost on  [occured %i times]",  lostPacketErrorCounterAux);
+      // 	lostPacketErrorCounterAux = 0;
+      // }
+      // if(samePacketErrorCounter > 0) {
+      // 	AssertErrorCondition(Warning, "nSampleNumber unchanged in  [occured %i times]",  samePacketErrorCounter);
+      // 	samePacketErrorCounter = 0;
+      // }
+      // if(recoveryCounter > 0) {
+      // 	AssertErrorCondition(Information, "Re-established correct packets sequence on  [occured %i times]",  recoveryCounter);
+      // 	recoveryCounter = 0;
+      // }
+      // if(previousPacketTooOldErrorCounter > 0) {
+      // 	AssertErrorCondition(Warning,"ATCAIocIntDrv::GetData: %s:  Data too old [occured %i times]",Name(),
+      // 			     previousPacketTooOldErrorCounter);
+      // 	previousPacketTooOldErrorCounter = 0;
+      // }
       lastCounterTime = currentCounterTime;
     }
 
-    // read data from ATCA card
-    int _ret = read(fileDescriptor, dataBuffer, packetByteSize);
-    //    int _ret = read(fileDescriptor, dataSource, packetByteSize, 0);
+#ifndef _FAKE_DEV
+
+    //read data from ATCA card
+        int _ret = read(devFd, dataSource, packetByteSize);
+
     if(_ret == -1) {
-      AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: Socket recv error");
+      AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: read() error");
       return;
     }
 
@@ -518,6 +530,14 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       sizeMismatchErrorCounter++;
       continue;
     }
+
+#else
+    //Fake read
+    SleepSec(100E-6);
+    for(int i = 0; i < packetByteSize/sizeof(int); i++){
+      dataSource[i]= i;
+    }
+#endif
 
     // Copy dataSource in the write only buffer; does endianity swap
     // Endianity::MemCopyFromMotorola((uint32 *)dataBuffer[writeBuffer],(uint32 *)dataSource,packetByteSize/sizeof(int32));
@@ -529,9 +549,9 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     // updated it is not being read elsewhere
     while(!mux.FastTryLock());
     // Update buffer index
-    //writeBuffer++;
-    //if(writeBuffer >= nOfDataBuffers) {
-    //writeBuffer = 0;
+    writeBuffer++;
+    if(writeBuffer >= nOfDataBuffers) 
+      writeBuffer = 0;
     //}
     freshPacket = True;
     // Unlock resource
@@ -577,12 +597,13 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     lastPacketID       = header->nSampleNumber;
     lastPacketUsecTime = header->nSampleTime;
 
+    */
     // If the module is the timingATCAIocIntDrv call the Trigger() method of
     // the time service object
     for(int i = 0 ; i < nOfTriggeringServices ; i++) {
       triggerService[i].Trigger();
     }
-    */
+
   }
   keepRunning = True;	
 }
