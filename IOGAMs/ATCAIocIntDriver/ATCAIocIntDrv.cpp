@@ -38,13 +38,12 @@
 #else
 #include "atm_rtai.h"
 #endif
+*/
 
-
-struct AtmMsgHeaderStruct{
+struct TimeHeaderStruct{
     unsigned int nSampleNumber; // the sample number since the last t=0
     unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds
 };
-*/
 
 // Timing ATCAIocInt module
 static const int32 timingATCAIocIntDrv = 400;
@@ -222,8 +221,8 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       AssertErrorCondition(Warning, "ATCAIocIntDrv::ObjectLoadSetup: %s ThreadPriority parameter not specified", Name());
     }
 
-    if(!cdb.ReadInt32(numberOfInputChannels, "NumberOfInput")){
-      CStaticAssertErrorCondition(InitialisationError,"SingleATCAModule::ObjectLoadSetup: NumberOfInput has not been specified.");
+    if(!cdb.ReadInt32(numberOfInputChannels, "NumberOfInputs")){
+      CStaticAssertErrorCondition(InitialisationError,"SingleATCAModule::ObjectLoadSetup: NumberOfInputs has not been specified.");
       return False;
     }
 	
@@ -235,8 +234,8 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     for(int i=0 ; i < nOfDataBuffers ; i++){
       dataBuffer[i] = (uint32 *)malloc(packetByteSize);//numberOfInputChannels*sizeof(int));
       if(dataBuffer[i] == NULL){
-	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s ATCAIocInt dataBuffer allocation failed",Name());
-	return False;
+        AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s ATCAIocInt dataBuffer allocation failed",Name());
+        return False;
       }
 
     // TODO Initialize the triple buffer
@@ -309,7 +308,7 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   }
   // Gets the last acquired data buffer
   uint32 * lastReadBuffer     = dataBuffer[globalReadBuffer];
-  /*   AtmMsgHeaderStruct *header = (AtmMsgHeaderStruct *)lastReadBuffer;
+  TimeHeaderStruct    *header = (TimeHeaderStruct *)lastReadBuffer;
   // Check data age
   uint32 sampleNo = header->nSampleNumber;
   if(freshPacket) {
@@ -324,23 +323,23 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
     sampleNo = 0xFFFFFFFF;
     previousPacketTooOldErrorCounter++;
   }
-  */
+  
 
   // Give back lock
   mux.FastUnLock();
-  /*
+  
   // Copy the data from the internal buffer to
   // the one passed in GetData
   uint32 *destination = (uint32 *)buffer;
-  uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
+  //uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
+  uint32 *destinationEnd = (uint32 *)(buffer + numberOfInputChannels);
   uint32 *source = lastReadBuffer;
   while(destination < destinationEnd) {
     *destination++ = *source++;
   }
 
-  AtmMsgHeaderStruct *p = (AtmMsgHeaderStruct *)buffer;
+  TimeHeaderStruct *p = (TimeHeaderStruct *)buffer;
   p->nSampleNumber = sampleNo;
-  */
   return 1;
 }
 
@@ -533,17 +532,17 @@ void ATCAIocIntDrv::RecCallback(void* arg){
 
 #else
     //Fake read
-    SleepSec(100E-6);
-    for(int i = 0; i < packetByteSize/sizeof(int); i++){
-      dataSource[i]= i;
-    }
+    SleepSec(1E-3);
+    dataSource[0] = lastPacketID++;
+    dataSource[1] = lastPacketUsecTime++;
+    dataSource[2] = 11915;
 #endif
 
     // Copy dataSource in the write only buffer; does endianity swap
-    // Endianity::MemCopyFromMotorola((uint32 *)dataBuffer[writeBuffer],(uint32 *)dataSource,packetByteSize/sizeof(int32));
-
+    Endianity::MemCopyFromIntel((uint32 *)dataBuffer[writeBuffer],(uint32 *)dataSource,packetByteSize/sizeof(int32));
+    //printf("%d %d\n", writeBuffer, dataBuffer[0][0]);
     // Checks if packets have been lost
-    //AtmMsgHeaderStruct *header = (AtmMsgHeaderStruct *)dataBuffer[writeBuffer];
+    TimeHeaderStruct *header = (TimeHeaderStruct *)dataBuffer[writeBuffer];
 
     // Make sure that while writeBuffer is being
     // updated it is not being read elsewhere
