@@ -11,6 +11,11 @@
 #ifndef _ATCA_IOC_INT_H_
 #define _ATCA_IOC_INT_H_
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
 #ifndef __KERNEL__
 #define u32 unsigned int
 #endif
@@ -85,6 +90,10 @@ typedef struct _COMMAND_REG {
 
 #undef PDEBUGG
 #define PDEBUGG(fmt, args...) /* nothing: it's a placeholder */
+
+#ifdef __cplusplus
+}
+#endif
 	  
 #endif /* _ATCA_IOC_INT_H_ */
 

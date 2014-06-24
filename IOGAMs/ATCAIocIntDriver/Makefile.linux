@@ -28,6 +28,7 @@ include Makefile.inc
 
 LIBRARIES   += -L ../../BaseLib2/$(TARGET) -lBaseLib2
 LIBRARIES   += -L../../MARTe/MARTeSupportLib/$(TARGET) -lMARTeSupLib 
+#LIBRARIES   += -L./ATCAIocIntLib -lfirst
 
 $(TARGET)/test.ex: $(TARGET)/test.o $(TARGET)/ATCAIocIntDrv$(OBJEXT)
 	$(COMPILER) $(LIBRARIES) $(CFLAGSPEC) $(CFLAGS) $(LFLAGS) $(TARGET)/ATCAIocIntDrv$(OBJEXT) $(TARGET)/test$(OBJEXT) -o $(TARGET)/test.ex

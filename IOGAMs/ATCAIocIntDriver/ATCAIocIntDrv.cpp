@@ -17,7 +17,9 @@
    express or implied. 
  * See the Licence for the specific language governing 
    permissions and limitations under the Licence. 
- *
+   *
+ * SVN keywords:
+ * $URL$
  * $Id$
  *
 **/
@@ -27,22 +29,123 @@
 #include "Endianity.h"
 #include "CDBExtended.h"
 #include "FastPollingMutexSem.h"
-#include "atca-ioc-int.h"
+//#include "atca-ioc-int-lib.h"
+//#include "atca-ioc-int.h"
 #include "atca-ioc-int-ioctl.h"
+
 
 #define _FAKE_DEV
 
-/*
-#ifndef _RTAI
-#include <linux/atm.h>
-#else
-#include "atm_rtai.h"
-#endif
-*/
+#define DMA_MAX_BYTES (4096 * 32) //PAGE_SIZE // 4096  Linux page size = 2048 samples
+
+#define NCHANNELS 16
+#define DMA_SIZE (DMA_MAX_BYTES/16/2/32) //  32 ok
+
+//#define NUM_CHAN_SMP 16// nr of 32bit data channels per sample.
+
+#define SAMP_PER_PACKET (DMA_SIZE/NCHANNELS/sizeof(int32_t)) // 2048
+
+int init_device(int fd)
+{
+  int  tmp, tmp0, rc,i;
+  //OFFSET_REGS off_s;
+
+  //  usleep(100);
+  //rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);// Get FPGA STATUS to check if properly initialized (optional)
+  //printf("FPGA Status: 0x%.8X\n", tmp);
+
+  rc = ioctl(fd, PCIE_ATCA_IOCG_COUNTER, &tmp0);
+  printf("FPGA Counter: 0x%.8X, %d", tmp0, tmp0);
+  usleep(10000);
+  // sleep(1);
+  rc = ioctl(fd, PCIE_ATCA_IOCG_COUNTER, &tmp);
+  printf(" +10ms Counter: %d, diff: %d\n", tmp, tmp - tmp0);
+  rc = ioctl(fd, PCIE_ATCA_IOCT_CHOP_ON); //Set the Chop on
+  rc = ioctl(fd, PCIE_ATCA_IOCT_CHOP_DEFAULT_0); // TODO: Change ioctl name
+  //The signal is  to be reconstruted inside the FPGA 
+  rc = ioctl(fd, PCIE_ATCA_IOCT_CHOP_RECONSTRUCT_ON);
+
+  tmp = DMA_SIZE;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_DMA_SIZE, &tmp);
+  rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_ON);
+
+  //Set the Chop's period, in this case is 2000 times the period of the acquisition period.
+  //(2000) The Chop's frequency will be 1kHz
+  tmp = 2000;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_CHOP_MAX_COUNT, &tmp);
+  tmp = 1000;
+  rc = ioctl(fd, PCIE_ATCA_IOCS_CHOP_CHANGE_COUNT, &tmp);
+
+  /* Reset ADC offsets*/
+  for (i=0; i < 64; i++) {
+    tmp = i;
+    rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
+    tmp = 0;
+    rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
+  }
+
+  /* Set 0, 1 ADC offsets*/
+  tmp = 0;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
+  tmp = -613;
+  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
+  tmp = 1;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
+  tmp = -244;
+  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
+
+  /* Set Integral offsets*/
+  tmp = 32;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
+  tmp = - 12000 ; //- (65536 *  0.2);
+  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
+
+  tmp = 33;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
+  tmp = -15000;// //- (65536 *  0.2);
+  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
+
+  rc = ioctl(fd, PCIE_ATCA_IOCT_ACQ_ENABLE);  // Arm the FPGA to wait for external trigger
+  usleep(10);
+  //  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
+  //printf("FPGA ACQ Status: 0x%.8X\n", tmp);
+  //tmp = 0;
+
+  rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_ENABLE);
+  //  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
+  //printf("FPGA STRE Status: 0x%.8X\n", tmp);
+  rc = ioctl(fd, PCIE_ATCA_IOCT_SOFT_TRIG);
+  usleep(10);
+  //tmp = 0;
+  //rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
+  //printf("FPGA TRG Status: 0x%.8X\n", tmp);
+
+  return rc;
+}
+
+int stop_device(int fd){
+
+  int tmp, rc, max_buf_count;
+
+  // this IOCTL returns the nr of times the driver IRQ handler was called while there was still 1 or more buffers waiting to be read
+  max_buf_count = ioctl(fd, PCIE_ATCA_IOCT_ACQ_DISABLE);// Stop streaming and un-arm the FPGA.
+
+ rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_DISABLE);
+ usleep(100);
+
+ rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_OFF);
+
+ rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
+ printf("ACQ Stopped, FPGA  Status: 0x%.8X, max buff_count: %d \n", tmp, max_buf_count);
+ // close(fd);
+ return max_buf_count;
+}
 
 struct TimeHeaderStruct{
     unsigned int nSampleNumber; // the sample number since the last t=0
-    unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds
+    unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds 
+    unsigned int dummyData[14]; // values from first packet
+    unsigned int channelData[16];  // values from last packet, channels 0-14, time on chann 15
 };
 
 // Timing ATCAIocInt module
@@ -65,8 +168,8 @@ bool ATCAIocIntDrv::EnableAcquisition(){
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::EnableAcquisition: %s: Could not open device node: %s",Name(), deviceFileName.Buffer());
     return False;
   }
-  // open here ATCAIocInt device
-  //fd=open()
+  init_device(devFd);
+
   liveness++;
   return True;
 }
@@ -75,13 +178,18 @@ bool ATCAIocIntDrv::EnableAcquisition(){
  * Disable System Acquisition
  */
 bool ATCAIocIntDrv::DisableAcquisition(){
-  // Set the chip off line
-  // close ATCAIOC socket
+
+  // close ATCA IOC 
   if (liveness==-1){
     AssertErrorCondition(Warning, "ATCAIocIntDrv::DisableAcquisition: ATM socket not alive");
     return False;
   }
-  //close(fd) ...
+  int max_buf_count= stop_device(devFd);
+  if(max_buf_count > 16){
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::DisableAcquisition: %s: DMA buffers overrun: %d: %s",Name(), max_buf_count, deviceFileName.Buffer());
+    return False;
+  }
+  close(devFd);
   liveness--;
   return True;
 }
@@ -226,7 +334,7 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       return False;
     }
 	
-    packetByteSize = DMA_SIZE;
+    packetByteSize = 128;
     /// Read the UsecPeriod of the ATCAIocInt packet producer
     //        cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
 
@@ -332,11 +440,17 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // the one passed in GetData
   uint32 *destination = (uint32 *)buffer;
   //uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
-  uint32 *destinationEnd = (uint32 *)(buffer + numberOfInputChannels);
-  uint32 *source = lastReadBuffer;
-  while(destination < destinationEnd) {
-    *destination++ = *source++;
+  //  uint32 *destinationEnd = (uint32 *)(buffer + numberOfInputChannels);
+  // uint32 *source = lastReadBuffer;
+  destination[0] = header->nSampleNumber;// *source++;
+  destination[1] = header->nSampleTime;// *source++;
+
+  for(int i = 2 ; i < numberOfInputChannels; i++) {
+    destination[i]  =header->channelData[i];   //  dataBuffer[i] = NULL;
   }
+    //  while(destination < destinationEnd) {
+    //*destination++ = *source++;
+    //}
 
   TimeHeaderStruct *p = (TimeHeaderStruct *)buffer;
   p->nSampleNumber = sampleNo;
@@ -529,17 +643,20 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       sizeMismatchErrorCounter++;
       continue;
     }
+    dataSource[0] = lastPacketID;
+    dataSource[1] = dataSource[31]/2; // Time counter information from board in 0.5 us resolut.
 
 #else
     //Fake read
     SleepSec(1E-3);
-    dataSource[0] = lastPacketID++;
+    dataSource[0] = lastPacketID;
     dataSource[1] = lastPacketUsecTime++;
     dataSource[2] = 11915;
 #endif
 
     // Copy dataSource in the write only buffer; does endianity swap
-    Endianity::MemCopyFromIntel((uint32 *)dataBuffer[writeBuffer],(uint32 *)dataSource,packetByteSize/sizeof(int32));
+    Endianity::MemCopyFromIntel((uint32 *)dataBuffer[writeBuffer], (uint32 *)dataSource,
+				packetByteSize/sizeof(int32));
     //printf("%d %d\n", writeBuffer, dataBuffer[0][0]);
     // Checks if packets have been lost
     TimeHeaderStruct *header = (TimeHeaderStruct *)dataBuffer[writeBuffer];
@@ -591,12 +708,14 @@ void ATCAIocIntDrv::RecCallback(void* arg){
 	}
       }
     }
-
-    // Update lastPacketID
-    lastPacketID       = header->nSampleNumber;
-    lastPacketUsecTime = header->nSampleTime;
-
     */
+    // Update lastPacketID
+    //    lastPacketID       = header->nSampleNumber;
+    //lastPacketUsecTime = header->nSampleTime;
+
+    // Update 
+    lastPacketID++;
+    lastPacketUsecTime = header->nSampleTime;
     // If the module is the timingATCAIocIntDrv call the Trigger() method of
     // the time service object
     for(int i = 0 ; i < nOfTriggeringServices ; i++) {
