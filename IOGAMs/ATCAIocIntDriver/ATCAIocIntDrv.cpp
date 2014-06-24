@@ -36,10 +36,10 @@
 
 //#define _FAKE_DEV
 
-#define DMA_MAX_BYTES (4096 * 32) //PAGE_SIZE // 4096  Linux page size = 2048 samples
+//#define DMA_MAX_BYTES (4096 * 32) //PAGE_SIZE // 4096  Linux page size = 2048 samples
 
 #define NCHANNELS 16
-#define DMA_SIZE (DMA_MAX_BYTES/16/2/32) //  32 ok
+#define DMA_SIZE 128 // (DMA_MAX_BYTES/16/2/32) //  32 ok
 
 //#define NUM_CHAN_SMP 16// nr of 32bit data channels per sample.
 
@@ -130,22 +130,22 @@ int stop_device(int fd){
   // this IOCTL returns the nr of times the driver IRQ handler was called while there was still 1 or more buffers waiting to be read
   max_buf_count = ioctl(fd, PCIE_ATCA_IOCT_ACQ_DISABLE);// Stop streaming and un-arm the FPGA.
 
- rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_DISABLE);
- usleep(100);
+  rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_DISABLE);
+  usleep(100);
 
- rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_OFF);
+  rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_OFF);
 
- rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
- printf("ACQ Stopped, FPGA  Status: 0x%.8X, max buff_count: %d \n", tmp, max_buf_count);
- // close(fd);
- return max_buf_count;
+  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
+  printf("ACQ Stopped, FPGA  Status: 0x%.8X, max buff_count: %d \n", tmp, max_buf_count);
+  // close(fd);
+  return max_buf_count;
 }
 
 struct TimeHeaderStruct{
-    unsigned int nSampleNumber; // the sample number since the last t=0
-    unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds 
-    unsigned int dummyData[14]; // values from first packet
-    unsigned int channelData[16];  // values from last packet, channels 0-14, time on chann 15
+  unsigned int nSampleNumber; // the sample number since the last t=0
+  unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds 
+  unsigned int dummyData[14]; // values from first packet
+  unsigned int channelData[16];  // values from last packet, channels 0-14, time on chann 15
 };
 
 // Timing ATCAIocInt module
@@ -205,7 +205,7 @@ bool  ATCAIocIntDrv::Init(){
   numberOfDigitalInputChannels            = 0;
   numberOfAnalogueOutputChannels          = 0;
   numberOfDigitalOutputChannels           = 0;
-//moduleType                          = ATCAIOCMODULE_UNDEFINED;
+  //moduleType                          = ATCAIOCMODULE_UNDEFINED;
   mux.Create();
   packetByteSize                      = 0;
   // Init receiver parameters
@@ -246,22 +246,21 @@ ATCAIocIntDrv::ATCAIocIntDrv(){
 ATCAIocIntDrv::~ATCAIocIntDrv(){
   keepRunning = False;
   DisableAcquisition();
-  //if(moduleType == ATCAIOCMODULE_RECEIVER) {
-    int counter = 0;
-    while((!keepRunning) && (counter++ < 100)) SleepMsec(1);
-    if(Threads::IsAlive(threadID)) {
-      AssertErrorCondition(Warning,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Had To Kill Thread %d",Name(), threadID);
-      Threads::Kill(threadID);
-      threadID = 0;
-    }
-    else{
-      AssertErrorCondition(Information,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Successfully waited for Thread %d to die on its own",Name(), threadID);
-    }
-    //}
+  int counter = 0;
+  while((!keepRunning) && (counter++ < 100)) SleepMsec(1);
+  if(Threads::IsAlive(threadID)) {
+    AssertErrorCondition(Warning,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Had To Kill Thread %d",Name(), threadID);
+    Threads::Kill(threadID);
+    threadID = 0;
+  }
+  else{
+    AssertErrorCondition(Information,"ATCAIocIntDrv::~ATCAIocIntDrv: %s: Successfully waited for Thread %d to die on its own",Name(), threadID);
+  }
+
   // Free memory
-    for(int i = 0 ; i < nOfDataBuffers ; i++) {
-      if(dataBuffer[i] != NULL)free((void *&)dataBuffer[i]);
-    }        
+  for(int i = 0 ; i < nOfDataBuffers ; i++) {
+    if(dataBuffer[i] != NULL)free((void *&)dataBuffer[i]);
+  }        
 
 }
 
@@ -298,9 +297,9 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s: DeviceFileName has to be specified",Name());
     return False;
   }
-  else {
-    AssertErrorCondition(Warning, "ATCAIocIntDrv::ObjectLoadSetup: %s, DeviceFileName: %s Opened", Name(), deviceFileName.Buffer());
-  }
+  //  else {
+  // AssertErrorCondition(Warning, "ATCAIocIntDrv::ObjectLoadSetup: %s, DeviceFileName: %s Opened", Name(), deviceFileName.Buffer());
+  //}
 
   cpuMask = 0xFFFF;
 
@@ -311,14 +310,14 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
 
   // Based on mudule type, init a recv or a send ATCAIOC channel
   //if(moduleType == ATCAIOCMODULE_RECEIVER){
-    /////////////////////////
-    // Input Module (recv) //
-    /////////////////////////
+  /////////////////////////
+  // Input Module (recv) //
+  /////////////////////////
 
-    // Read MaxDataAgeUsec param
-    if (!cdb.ReadInt32(maxDataAgeUsec, "MaxDataAgeUsec", 20000)){
-      AssertErrorCondition(Warning,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify MaxDataAgeUsec entry. Assuming %i usec" ,Name(),maxDataAgeUsec);
-      //}
+  // Read MaxDataAgeUsec param
+  if (!cdb.ReadInt32(maxDataAgeUsec, "MaxDataAgeUsec", 20000)){
+    AssertErrorCondition(Warning,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify MaxDataAgeUsec entry. Assuming %i usec" ,Name(),maxDataAgeUsec);
+    //}
     // Read MacNOfLostPackets
     cdb.ReadInt32(maxNOfLostPackets, "MaxNOfLostPackets", 4);
 
@@ -348,7 +347,7 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
         return False;
       }
 
-    // TODO Initialize the triple buffer
+      // TODO Initialize the triple buffer
       //uint32 *tempData = dataBuffer[i];
       //for(int j = 0 ; j < numberOfInputChannels ; j++) {
       //tempData[j] = 0;
@@ -359,11 +358,11 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
 
   }
   /* else if(moduleType == ATCAIOCMODULE_TRANSMITTER) {
-    //////////////////////////
-    // Output Module (send) //
-    //////////////////////////
-    // NOt yet implemented
-  }
+//////////////////////////
+// Output Module (send) //
+//////////////////////////
+// NOt yet implemented
+}
   */
   if(!EnableAcquisition()) {
     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup Failed Enabling Acquisition");
@@ -374,14 +373,14 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
   FString threadName = Name();
   threadName += "ATCAIocIntHandler";
   //  if(moduleType == ATCAIOCMODULE_RECEIVER) {
-    threadID = Threads::BeginThread((ThreadFunctionType)ReceiverCallback, (void*)this, THREADS_DEFAULT_STACKSIZE, threadName.Buffer(), XH_NotHandled, cpuMask);
-    int counter = 0;
-    while((!keepRunning)&&(counter++ < 100)) SleepMsec(1);
-    if(!keepRunning) {
-      AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup: ReceiverCallback failed to start");
-      return False;
-    }
-    //}
+  threadID = Threads::BeginThread((ThreadFunctionType)ReceiverCallback, (void*)this, THREADS_DEFAULT_STACKSIZE, threadName.Buffer(), XH_NotHandled, cpuMask);
+  int counter = 0;
+  while((!keepRunning)&&(counter++ < 100)) SleepMsec(1);
+  if(!keepRunning) {
+    AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup: ReceiverCallback failed to start");
+    return False;
+  }
+  //}
 
   // Tell user the initialization phase is done
   AssertErrorCondition(Information,"ATCAIocIntDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s",Name(), deviceFileName.Buffer());
@@ -411,7 +410,7 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // changed in the receiver thread callback
   while(!mux.FastTryLock());
 
- // Update readBuffer index
+  // Update readBuffer index
   globalReadBuffer = writeBuffer - 1;
   if(globalReadBuffer < 0) {
     globalReadBuffer = nOfDataBuffers-1;
@@ -450,9 +449,9 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   for(int i = 2 ; i < numberOfInputChannels; i++) {
     destination[i]  =header->channelData[i];   //  dataBuffer[i] = NULL;
   }
-    //  while(destination < destinationEnd) {
-    //*destination++ = *source++;
-    //}
+  //  while(destination < destinationEnd) {
+  //*destination++ = *source++;
+  //}
 
   TimeHeaderStruct *p = (TimeHeaderStruct *)buffer;
   p->nSampleNumber = sampleNo;
@@ -482,8 +481,8 @@ bool ATCAIocIntDrv::WriteData(uint32 usecTime, const int32 *buffer){
   int _ret;
   _ret = send(atmSocket, outputPacket, size, 0);
   if(_ret == -1){
-    AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s. Send socket error",Name());
-    return False;
+  AssertErrorCondition(FatalError,"ATCAIocIntDrv::WriteData: %s. Send socket error",Name());
+  return False;
   }
   */
   return True;
@@ -506,17 +505,17 @@ bool ATCAIocIntDrv::InputDump(StreamInterface &s) const {
 /**
  * OutputDump
 
-bool ATCAIocIntDrv::OutputDump(StreamInterface &s) const{
-  // Checks for the I/O type
-  if(moduleType != ATCAIOCMODULE_TRANSMITTER){
-    s.Printf("%s is not an Output module\n",Name());
-    return False;
-  }
-  // Prints some usefull informations about the input board
-  //s.Printf("%s - ATM board attached at VCI #%d\n\n",Name(),vci);
-  return True;
-}
- */ 
+ bool ATCAIocIntDrv::OutputDump(StreamInterface &s) const{
+ // Checks for the I/O type
+ if(moduleType != ATCAIOCMODULE_TRANSMITTER){
+ s.Printf("%s is not an Output module\n",Name());
+ return False;
+ }
+ // Prints some usefull informations about the input board
+ //s.Printf("%s - ATM board attached at VCI #%d\n\n",Name(),vci);
+ return True;
+ }
+*/ 
 
 /**
  * GetUsecTime
@@ -545,7 +544,7 @@ bool ATCAIocIntDrv::ObjectDescription(StreamInterface &s, bool full, StreamInter
   s.Printf("Module Name --> %s\n",Name());
   // VCI Parameters
   //s.Printf("VCI No                   = %d\n",vci);
-//  s.Printf("MaxDataAgeUsec           = %d\n",maxDataAgeUsec);
+  //  s.Printf("MaxDataAgeUsec           = %d\n",maxDataAgeUsec);
   s.Printf("MaxNOfLostPackets        = %d\n",maxNOfLostPackets);
   // VCI Type
   // switch (moduleType){
@@ -582,6 +581,8 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     Threads::SetPriorityLevel(receiverThreadPriority);
   }
 
+  int print_n=10;
+  int timeInit=0;
   // Allocate
   int32 *dataSource;
   if((dataSource = (int32 *)malloc(packetByteSize)) == NULL) {
@@ -633,7 +634,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
 #ifndef _FAKE_DEV
 
     //read data from ATCA card
-        int _ret = read(devFd, dataSource, packetByteSize);
+    int _ret = read(devFd, dataSource, packetByteSize);
 
     if(_ret == -1) {
       AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: read() error");
@@ -646,7 +647,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       continue;
     }
     dataSource[0] = lastPacketID;
-    dataSource[1] = dataSource[31]/2; // Time counter information from board in 0.5 us resolut.
+    dataSource[1] = dataSource[31]/2 -timeInit; // Time counter information from board in 0.5 us resolution.
 
 #else
     //Fake read
@@ -675,41 +676,46 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     // Unlock resource
     mux.FastUnLock();
     /*
-    if(producerUsecPeriod != -1) {
+      if(producerUsecPeriod != -1) {
       int64 counter = HRT::HRTCounter();
       /// Allow for a 10% deviation from the specified producer usec period
       if(abs((uint32)((counter-lastCounter)*HRT::HRTPeriod()*1000000)-(uint32)((header->nSampleNumber-originalNSampleNumber)*producerUsecPeriod)) > 0.1*producerUsecPeriod) {
-	deviationErrorCounter++;
+      deviationErrorCounter++;
       }
       originalNSampleNumber = header->nSampleNumber;
       lastCounter = counter;
-    }
-
-    // If is the first packet doesn't do any check on nSampleNumber
-    if(lastPacketID != 0xFFFFFFFF) {
+      }
+    */
+      // If is the first packet doesn't do any check on nSampleNumber
+      if(lastPacketID != 0xFFFFFFFF) {
       // Checks nSampleNumber
       // Warning if a reset has happened and too much packet had been lost
       // nSampleNumber has been casted to int32 to prevent wrong casting from compiler
-      if((int32)(header->nSampleNumber)-lastPacketID < 0) {
-	if((int32)(header->nSampleNumber) > maxNOfLostPackets) {
-	  rolloverErrorCounter++;
-	}
-      } else {
-	// nSampleNumber has been casted to int32 to prevent wrong casting from compiler
-	if(((int32)(header->nSampleNumber)-lastPacketID) > 1) {
-	  // Warning if a packet is lost
-	  lostPacketErrorCounter++;
-	  lostPacketErrorCounterAux++;
-	} else if(((int32)(header->nSampleNumber)-lastPacketID) == 0) {
-	  // Warning if nSampleNumber in packet hasn't changed
-	  samePacketErrorCounter++;
-	} else if(lostPacketErrorCounter > 0) {
-	  recoveryCounter++;
-	  // Reset error counter
-	  lostPacketErrorCounter = 0;
-	}
+	if((int32)(header->nSampleNumber)-lastPacketID < 0) {
+	  if((int32)(header->nSampleNumber) > maxNOfLostPackets) {
+	    rolloverErrorCounter++;
+	  }
+	} 
+      }	
+      else {
+	timeInit= header->nSampleTime;
       }
-    }
+	  /*
+      // nSampleNumber has been casted to int32 to prevent wrong casting from compiler
+      if(((int32)(header->nSampleNumber)-lastPacketID) > 1) {
+      // Warning if a packet is lost
+      lostPacketErrorCounter++;
+      lostPacketErrorCounterAux++;
+      } else if(((int32)(header->nSampleNumber)-lastPacketID) == 0) {
+      // Warning if nSampleNumber in packet hasn't changed
+      samePacketErrorCounter++;
+      } else if(lostPacketErrorCounter > 0) {
+      recoveryCounter++;
+      // Reset error counter
+      lostPacketErrorCounter = 0;
+      }
+      }
+      }
     */
     // Update lastPacketID
     //    lastPacketID       = header->nSampleNumber;
@@ -718,6 +724,10 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     // Update 
     lastPacketID++;
     lastPacketUsecTime = header->nSampleTime;
+    if ((print_n--) > 0) 
+      printf("%d:%d ",  lastPacketID, lastPacketUsecTime);
+    //      printf("%d:%d ",  dataSource[1]);
+    //    if ((print_n--) == 0) 
     // If the module is the timingATCAIocIntDrv call the Trigger() method of
     // the time service object
     for(int i = 0 ; i < nOfTriggeringServices ; i++) {
@@ -733,77 +743,94 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
   hStream.keepAlive = False;
   //copy to the client
   hStream.WriteReplyHeader(False);
-
+  
   hStream.Printf("<html><head><title>LinuxATCAIocIntDrv</title></head>\n");
   hStream.Printf("<body>\n");
-  /*
+
   hStream.Printf("<h1 align=\"center\">%s</h1>\n", Name());
-  if(moduleType == ATMMODULE_RECEIVER) {
-    hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Receiver");
-  } else if(moduleType == ATMMODULE_TRANSMITTER) {
+  
+  //    if(moduleType == ATMMODULE_RECEIVER) {
+
+  hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Receiver");
+  /*
+    } else if(moduleType == ATMMODULE_TRANSMITTER) {
     hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Transmitter");
-  } else {
+    } else {
     hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Undefined");
-  }
-  hStream.Printf("<h2 align=\"center\"> %d</h2>\n", vci);
-  if(moduleType == ATMMODULE_RECEIVER) {
-    hStream.Printf("<h2 align=\"center\">Input channels = %d</h2>\n", numberOfInputChannels);
-    hStream.Printf("<h2 align=\"center\">MaxDataAgeUsec = %d</h2>\n", maxDataAgeUsec);
-    hStream.Printf("<h2 align=\"center\">MaxNOfLostPackets = %d</h2>\n", maxNOfLostPackets);
-    hStream.Printf("<h2 align=\"center\">CPU mask = 0x%x</h2>\n", cpuMask);
-    hStream.Printf("<h2 align=\"center\">Thread priority = %d</h2>\n", receiverThreadPriority);
-  } else if(moduleType == ATMMODULE_TRANSMITTER) {
-    hStream.Printf("<h2 align=\"center\">Output channels = %d</h2>\n", numberOfOutputChannels);
-  }
-
-  if(moduleType == ATMMODULE_RECEIVER) {
-    // Data table 
-    hStream.Printf("<table border=\"1\" align=\"center\">\n");
-    hStream.Printf("<tr>\n");
-    hStream.Printf("<th></th>\n");
-    hStream.Printf("<th>Buffer(k)</th>\n");
-    hStream.Printf("<th>Buffer(k-1)</th>\n");
-    hStream.Printf("<th>Buffer(k-2)</th>\n");
-    hStream.Printf("</tr>\n");
-
-    int32 idx;
-
-    hStream.Printf("<tr>\n");
-    hStream.Printf("<td>Sample Number</td>\n");
-    for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
-      idx = writeBuffer-1-i;
-      if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
-      if(dataBuffer[idx] != NULL) {
-	hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+0));
-      }
     }
-    hStream.Printf("</tr>\n");
-
-    hStream.Printf("<tr>\n");
-    hStream.Printf("<td>Sample Time (usec)</td>\n");
-    for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
-      idx = writeBuffer-1-i;
-      if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
-      if(dataBuffer[idx] != NULL) {
-	hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+1));
+    hStream.Printf("<h2 align=\"center\"> %d</h2>\n", vci);
+    if(moduleType == ATMMODULE_RECEIVER) {
+  */
+  hStream.Printf("<h2 align=\"center\">Input channels = %d</h2>\n", numberOfInputChannels);
+  hStream.Printf("<h2 align=\"center\">MaxDataAgeUsec = %d</h2>\n", maxDataAgeUsec);
+  hStream.Printf("<h2 align=\"center\">MaxNOfLostPackets = %d</h2>\n", maxNOfLostPackets);
+  hStream.Printf("<h2 align=\"center\">CPU mask = 0x%x</h2>\n", cpuMask);
+  hStream.Printf("<h2 align=\"center\">Thread priority = %d</h2>\n", receiverThreadPriority);
+  /*  
+      } else if(moduleType == ATMMODULE_TRANSMITTER) {
+      hStream.Printf("<h2 align=\"center\">Output channels = %d</h2>\n", numberOfOutputChannels);
       }
-    }
-    hStream.Printf("</tr>\n");
 
-    hStream.Printf("<tr>\n");
-    hStream.Printf("<td>Packet Id</td>\n");
-    for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
-      idx = writeBuffer-1-i;
-      if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
-      if(dataBuffer[idx] != NULL) {
-	hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+packetByteSize/sizeof(int32)-1));
-      }
+      if(moduleType == ATMMODULE_RECEIVER) {
+  */
+  // Data table 
+  hStream.Printf("<table border=\"1\" align=\"center\">\n");
+  hStream.Printf("<tr>\n");
+  hStream.Printf("<th></th>\n");
+  hStream.Printf("<th>Buffer(k)</th>\n");
+  hStream.Printf("<th>Buffer(k-1)</th>\n");
+  hStream.Printf("<th>Buffer(k-2)</th>\n");
+  hStream.Printf("</tr>\n");
+
+  int32 idx;
+
+  hStream.Printf("<tr>\n");
+  hStream.Printf("<td>PacketID</td>\n");
+  for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
+    idx = writeBuffer-1-i;
+    if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
+    if(dataBuffer[idx] != NULL) {
+      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+0));
     }
-    hStream.Printf("</tr>\n");
   }
-*/
+  hStream.Printf("</tr>\n");
+  
+  hStream.Printf("<tr>\n");
+  hStream.Printf("<td>PacketUsecTime (usec)</td>\n");
+  for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
+    idx = writeBuffer-1-i;
+    if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
+    if(dataBuffer[idx] != NULL) {
+      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+1));
+    }
+  }
+  hStream.Printf("</tr>\n");
+    
+  hStream.Printf("<tr>\n");
+  hStream.Printf("<td>Channel1</td>\n");
+  for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
+    idx = writeBuffer-1-i;
+    if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
+    if(dataBuffer[idx] != NULL) {
+      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+ 2));
+      //	hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+packetByteSize/sizeof(int32)-1));
+    }
+  }
+  hStream.Printf("</tr>\n");
+  hStream.Printf("<tr>\n");
+
+  hStream.Printf("<td>Channel2</td>\n");
+  for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
+    idx = writeBuffer-1-i;
+    if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
+    if(dataBuffer[idx] != NULL) {
+      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+ 3));
+    }
+  }
+  hStream.Printf("</tr>\n");
+   
   hStream.Printf("</table>\n");
   hStream.Printf("</body></html>\n");
-
+  
 }
 OBJECTLOADREGISTER(ATCAIocIntDrv, "$Id$")
