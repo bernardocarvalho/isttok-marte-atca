@@ -34,7 +34,7 @@
 #include "atca-ioc-int-ioctl.h"
 
 
-#define _FAKE_DEV
+//#define _FAKE_DEV
 
 #define DMA_MAX_BYTES (4096 * 32) //PAGE_SIZE // 4096  Linux page size = 2048 samples
 
@@ -160,7 +160,7 @@ bool ATCAIocIntDrv::EnableAcquisition(){
   // Set the chip on line
 
   if (liveness!=-1){
-    AssertErrorCondition(Warning, "ATCAIocIntDrv::EnableAcquisition: ATM socket already alive");
+    AssertErrorCondition(Warning, "ATCAIocIntDrv::EnableAcquisition: ATCA device  already alive");
     return False;
   }
   devFd = open(deviceFileName.Buffer(), O_RDWR);
@@ -181,7 +181,7 @@ bool ATCAIocIntDrv::DisableAcquisition(){
 
   // close ATCA IOC 
   if (liveness==-1){
-    AssertErrorCondition(Warning, "ATCAIocIntDrv::DisableAcquisition: ATM socket not alive");
+    AssertErrorCondition(Warning, "ATCAIocIntDrv::DisableAcquisition: ATCA Board device not open");
     return False;
   }
   int max_buf_count= stop_device(devFd);
@@ -298,7 +298,9 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s: DeviceFileName has to be specified",Name());
     return False;
   }
-
+  else {
+    AssertErrorCondition(Warning, "ATCAIocIntDrv::ObjectLoadSetup: %s, DeviceFileName: %s Opened", Name(), deviceFileName.Buffer());
+  }
 
   cpuMask = 0xFFFF;
 
