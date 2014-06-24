@@ -33,8 +33,7 @@
 //#include "atca-ioc-int.h"
 #include "atca-ioc-int-ioctl.h"
 
-
-//#define _FAKE_DEV
+#define _FAKE_DEV
 
 //#define DMA_MAX_BYTES (4096 * 32) //PAGE_SIZE // 4096  Linux page size = 2048 samples
 
@@ -142,10 +141,10 @@ int stop_device(int fd){
 }
 
 struct TimeHeaderStruct{
-  unsigned int nSampleNumber; // the sample number since the last t=0
-  unsigned int nSampleTime;   // the time since t=0, going to PRE as microseconds 
-  unsigned int dummyData[14]; // values from first packet
-  unsigned int channelData[16];  // values from last packet, channels 0-14, time on chann 15
+  unsigned int nSampleNumber;    // the sample number since the last t=0
+  unsigned int nSampleTime;      // the time since t=0, going to PRE as microseconds 
+  unsigned int dummyData[14];    // values from first packet -- to discard
+  unsigned int channelData[16];  // values from last packet receive, channels 0-14, time on channel 15
 };
 
 // Timing ATCAIocInt module
@@ -163,12 +162,17 @@ bool ATCAIocIntDrv::EnableAcquisition(){
     AssertErrorCondition(Warning, "ATCAIocIntDrv::EnableAcquisition: ATCA device  already alive");
     return False;
   }
+
+#ifndef _FAKE_DEV
   devFd = open(deviceFileName.Buffer(), O_RDWR);
   if(devFd < 1){
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::EnableAcquisition: %s: Could not open device node: %s",Name(), deviceFileName.Buffer());
     return False;
   }
   init_device(devFd);
+#else
+  devFd = open("/dev/null", O_RDWR);
+#endif
 
   liveness++;
   return True;
@@ -178,13 +182,18 @@ bool ATCAIocIntDrv::EnableAcquisition(){
  * Disable System Acquisition
  */
 bool ATCAIocIntDrv::DisableAcquisition(){
-
+  int max_buf_count;
   // close ATCA IOC 
   if (liveness==-1){
     AssertErrorCondition(Warning, "ATCAIocIntDrv::DisableAcquisition: ATCA Board device not open");
     return False;
   }
-  int max_buf_count= stop_device(devFd);
+#ifndef _FAKE_DEV
+  max_buf_count= stop_device(devFd);
+#else
+  max_buf_count=0;
+#endif
+
   if(max_buf_count > 16){
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::DisableAcquisition: %s: DMA buffers overrun: %d: %s",Name(), max_buf_count, deviceFileName.Buffer());
     return False;
@@ -421,7 +430,7 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // Check data age
   uint32 sampleNo = header->nSampleNumber;
   if(freshPacket) {
-    if(abs(usecTime-header->nSampleTime) > maxDataAgeUsec) {
+    if(abs(usecTime - header->nSampleTime) > maxDataAgeUsec) {
       // Packet too old
       // return the last received data and put 0xFFFFFFFF as nSampleNumber
       sampleNo = 0xFFFFFFFF;
@@ -447,7 +456,7 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   destination[1] = header->nSampleTime;// *source++;
 
   for(int i = 2 ; i < numberOfInputChannels; i++) {
-    destination[i]  =header->channelData[i];   //  dataBuffer[i] = NULL;
+    destination[i]  = header->channelData[i-2];   //  dataBuffer[i] = NULL;
   }
   //  while(destination < destinationEnd) {
   //*destination++ = *source++;
@@ -581,7 +590,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     Threads::SetPriorityLevel(receiverThreadPriority);
   }
 
-  int print_n=10;
+  //  int print_n=10;
   int timeInit=0;
   // Allocate
   int32 *dataSource;
@@ -633,9 +642,11 @@ void ATCAIocIntDrv::RecCallback(void* arg){
 
 #ifndef _FAKE_DEV
 
-    //read data from ATCA card
+    /**
+       read data from ATCA card 
+       Gets two 64 bytes packets (minimum DMA size is 128 bytes...). Discards earlier packet 
+    */ 
     int _ret = read(devFd, dataSource, packetByteSize);
-
     if(_ret == -1) {
       AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: read() error");
       return;
@@ -648,13 +659,12 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     }
     dataSource[0] = lastPacketID;
     dataSource[1] = dataSource[31]/2 -timeInit; // Time counter information from board in 0.5 us resolution.
-
 #else
     //Fake read
-    SleepSec(1E-3);
+    SleepSec(1E-4);
     dataSource[0] = lastPacketID;
     dataSource[1] = lastPacketUsecTime++;
-    dataSource[2] = 11915;
+    dataSource[16] = 11915;
 #endif
 
     // Copy dataSource in the write only buffer; does endianity swap
@@ -724,8 +734,8 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     // Update 
     lastPacketID++;
     lastPacketUsecTime = header->nSampleTime;
-    if ((print_n--) > 0) 
-      printf("%d:%d ",  lastPacketID, lastPacketUsecTime);
+    //    if ((print_n--) > 0) 
+    //printf("%d:%d ",  lastPacketID, lastPacketUsecTime);
     //      printf("%d:%d ",  dataSource[1]);
     //    if ((print_n--) == 0) 
     // If the module is the timingATCAIocIntDrv call the Trigger() method of
@@ -751,7 +761,7 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
   
   //    if(moduleType == ATMMODULE_RECEIVER) {
 
-  hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Receiver");
+  //  hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Receiver");
   /*
     } else if(moduleType == ATMMODULE_TRANSMITTER) {
     hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Transmitter");
@@ -761,6 +771,7 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
     hStream.Printf("<h2 align=\"center\"> %d</h2>\n", vci);
     if(moduleType == ATMMODULE_RECEIVER) {
   */
+  hStream.Printf("<h2 align=\"center\">ATCA device = %s</h2>\n", deviceFileName.Buffer());
   hStream.Printf("<h2 align=\"center\">Input channels = %d</h2>\n", numberOfInputChannels);
   hStream.Printf("<h2 align=\"center\">MaxDataAgeUsec = %d</h2>\n", maxDataAgeUsec);
   hStream.Printf("<h2 align=\"center\">MaxNOfLostPackets = %d</h2>\n", maxNOfLostPackets);
@@ -812,7 +823,7 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
     idx = writeBuffer-1-i;
     if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
     if(dataBuffer[idx] != NULL) {
-      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+ 2));
+      hStream.Printf("<td>%d</td>", *(dataBuffer[idx]+ 16));
       //	hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+packetByteSize/sizeof(int32)-1));
     }
   }
@@ -824,7 +835,7 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
     idx = writeBuffer-1-i;
     if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
     if(dataBuffer[idx] != NULL) {
-      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+ 3));
+      hStream.Printf("<td>%d</td>", *(dataBuffer[idx]+ 17));
     }
   }
   hStream.Printf("</tr>\n");
