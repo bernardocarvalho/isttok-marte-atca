@@ -33,17 +33,16 @@
 //#include "atca-ioc-int.h"
 #include "atca-ioc-int-ioctl.h"
 
-#define _FAKE_DEV
+//#define _FAKE_DEV
 
-//#define DMA_MAX_BYTES (4096 * 32) //PAGE_SIZE // 4096  Linux page size = 2048 samples
+//#define NCHANNELS 32
 
-#define NCHANNELS 16
+
+//#define SAMP_PER_PACKET (DMA_SIZE/NCHANNELS/sizeof(int32_t)) // 2048
+
 #define DMA_SIZE 128 // (DMA_MAX_BYTES/16/2/32) //  32 ok
 
-//#define NUM_CHAN_SMP 16// nr of 32bit data channels per sample.
-
-#define SAMP_PER_PACKET (DMA_SIZE/NCHANNELS/sizeof(int32_t)) // 2048
-
+/***************/
 int init_device(int fd)
 {
   int  tmp, tmp0, rc,i;
@@ -140,11 +139,13 @@ int stop_device(int fd){
   return max_buf_count;
 }
 
-struct TimeHeaderStruct{
+
+struct PacketStruct{
+  unsigned int channelData[30];  // values from last packet receive, channels 0-14, time on channel 15
   unsigned int nSampleNumber;    // the sample number since the last t=0
   unsigned int nSampleTime;      // the time since t=0, going to PRE as microseconds 
-  unsigned int dummyData[14];    // values from first packet -- to discard
-  unsigned int channelData[16];  // values from last packet receive, channels 0-14, time on channel 15
+  //  unsigned int dummyData[14];    // values from first packet -- to discard
+  //unsigned int channelData[16];  // values from last packet receive, channels 0-14, time on channel 15
 };
 
 // Timing ATCAIocInt module
@@ -154,8 +155,8 @@ static const int32 timingATCAIocIntDrv = 400;
  * Enable System Acquisition
  */
 bool ATCAIocIntDrv::EnableAcquisition(){
-  // Initialise lastPacketID equal to 0xFFFFFFFF
-  lastPacketID = 0xFFFFFFFF;
+  // Initialise lastPacketNo equal to 0xFFFFFFFF
+  lastPacketNo = 0xFFFFFFFF;
   // Set the chip on line
 
   if (liveness!=-1){
@@ -216,7 +217,7 @@ bool  ATCAIocIntDrv::Init(){
   numberOfDigitalOutputChannels           = 0;
   //moduleType                          = ATCAIOCMODULE_UNDEFINED;
   mux.Create();
-  packetByteSize                      = 0;
+  //  packetByteSize                      = 0;
   // Init receiver parameters
   writeBuffer                         = 0;
   globalReadBuffer                    = 0;
@@ -228,12 +229,12 @@ bool  ATCAIocIntDrv::Init(){
   samePacketErrorCounter              = 0;
   recoveryCounter                     = 0;
   maxDataAgeUsec                      = 20000;
-  lastPacketID                        = 0xFFFFFFFF;
+  lastPacketNo                        = 0xFFFFFFFF;
   lastPacketUsecTime                  = 0;
   liveness                            = -1;
   keepRunning                         = False;
-  //producerUsecPeriod                  = -1;
-  //originalNSampleNumber               = 0;
+  producerUsecPeriod                  = -1;
+  originalNSampleNumber               = 0;
   lastCounter                         = 0;
   cpuMask                             = 0xFFFF;
   receiverThreadPriority              = 0;
@@ -344,9 +345,8 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       return False;
     }
 	
-    packetByteSize = 128;
     /// Read the UsecPeriod of the ATCAIocInt packet producer
-    //        cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
+    cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
 
     // Create Data Buffers. Compute total size and allocate storing buffer 
     for(int i=0 ; i < nOfDataBuffers ; i++){
@@ -355,24 +355,9 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
         AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s ATCAIocInt dataBuffer allocation failed",Name());
         return False;
       }
-
-      // TODO Initialize the triple buffer
-      //uint32 *tempData = dataBuffer[i];
-      //for(int j = 0 ; j < numberOfInputChannels ; j++) {
-      //tempData[j] = 0;
-      //}
-    
     }
-    //    packetByteSize = numberOfInputChannels*sizeof(int32);
-
   }
-  /* else if(moduleType == ATCAIOCMODULE_TRANSMITTER) {
-//////////////////////////
-// Output Module (send) //
-//////////////////////////
-// NOt yet implemented
-}
-  */
+
   if(!EnableAcquisition()) {
     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup Failed Enabling Acquisition");
     return False;
@@ -426,13 +411,14 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   }
   // Gets the last acquired data buffer
   uint32 * lastReadBuffer     = dataBuffer[globalReadBuffer];
-  TimeHeaderStruct    *header = (TimeHeaderStruct *)lastReadBuffer;
+  PacketStruct    *pkt = (PacketStruct *)lastReadBuffer;
   // Check data age
-  uint32 sampleNo = header->nSampleNumber;
+  uint32 sampleNo = pkt->nSampleNumber;
   if(freshPacket) {
-    if(abs(usecTime - header->nSampleTime) > maxDataAgeUsec) {
+    if(abs(usecTime - pkt->nSampleTime) > maxDataAgeUsec) {
       // Packet too old
       // return the last received data and put 0xFFFFFFFF as nSampleNumber
+      //      printf("old:%u:%u  ", usecTime , pkt->nSampleTime );
       sampleNo = 0xFFFFFFFF;
       previousPacketTooOldErrorCounter++;
       freshPacket = False;
@@ -441,7 +427,6 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
     sampleNo = 0xFFFFFFFF;
     previousPacketTooOldErrorCounter++;
   }
-  
 
   // Give back lock
   mux.FastUnLock();
@@ -449,20 +434,20 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // Copy the data from the internal buffer to
   // the one passed in GetData
   uint32 *destination = (uint32 *)buffer;
-  //uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
+  uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
   //  uint32 *destinationEnd = (uint32 *)(buffer + numberOfInputChannels);
-  // uint32 *source = lastReadBuffer;
-  destination[0] = header->nSampleNumber;// *source++;
-  destination[1] = header->nSampleTime;// *source++;
-
-  for(int i = 2 ; i < numberOfInputChannels; i++) {
-    destination[i]  = header->channelData[i-2];   //  dataBuffer[i] = NULL;
+  uint32 *source = lastReadBuffer;
+  while(destination < destinationEnd) {
+    *destination++ = *source++;
   }
-  //  while(destination < destinationEnd) {
-  //*destination++ = *source++;
+  //  destination[0] = pkt->nSampleNumber;// *source++;
+  //destination[1] = pkt->nSampleTime;// *source++;
+
+  //  for(int i = 2 ; i < numberOfInputChannels; i++) {
+  //destination[i]  = pkt->channelData[i-2];   //  dataBuffer[i] = NULL;
   //}
 
-  TimeHeaderStruct *p = (TimeHeaderStruct *)buffer;
+  PacketStruct *p = (PacketStruct *)buffer;
   p->nSampleNumber = sampleNo;
   return 1;
 }
@@ -531,16 +516,10 @@ bool ATCAIocIntDrv::InputDump(StreamInterface &s) const {
  */
 int64 ATCAIocIntDrv::GetUsecTime(){
 
-  // Check module type
-  // if (moduleType!=ATCAIOCMODULE_RECEIVER){
-  //   AssertErrorCondition(FatalError,"GetUsecTime:This method can only be called an input ATCAIocInt channel");
-  //   return 0xFFFFFFFF;
-  // }
-
   if(producerUsecPeriod != -1) {
     return ((int64)originalNSampleNumber*(int64)producerUsecPeriod);
   } else {
-    return lastPacketUsecTime;
+    return  lastPacketUsecTime;
   }
 }
 
@@ -551,8 +530,6 @@ bool ATCAIocIntDrv::ObjectDescription(StreamInterface &s, bool full, StreamInter
   s.Printf("%s %s\n",ClassName(),Version());
   // Module name
   s.Printf("Module Name --> %s\n",Name());
-  // VCI Parameters
-  //s.Printf("VCI No                   = %d\n",vci);
   //  s.Printf("MaxDataAgeUsec           = %d\n",maxDataAgeUsec);
   s.Printf("MaxNOfLostPackets        = %d\n",maxNOfLostPackets);
   // VCI Type
@@ -591,7 +568,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
   }
 
   //  int print_n=10;
-  int timeInit=0;
+  //  int timeInit=0;
   // Allocate
   int32 *dataSource;
   if((dataSource = (int32 *)malloc(packetByteSize)) == NULL) {
@@ -620,10 +597,10 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       // 	AssertErrorCondition(Warning,"Lost more than %d packets after a reset on [occured %i times]",maxNOfLostPackets, rolloverErrorCounter);
       // 	rolloverErrorCounter = 0;
       // }
-      // if(lostPacketErrorCounterAux > 0) {
-      // 	AssertErrorCondition(Warning, "packets lost on  [occured %i times]",  lostPacketErrorCounterAux);
-      // 	lostPacketErrorCounterAux = 0;
-      // }
+      if(lostPacketErrorCounterAux > 0) {
+       	AssertErrorCondition(Warning, "packets lost on  [occured %i times]",  lostPacketErrorCounterAux);
+       	lostPacketErrorCounterAux = 0;
+      }
       // if(samePacketErrorCounter > 0) {
       // 	AssertErrorCondition(Warning, "nSampleNumber unchanged in  [occured %i times]",  samePacketErrorCounter);
       // 	samePacketErrorCounter = 0;
@@ -632,47 +609,44 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       // 	AssertErrorCondition(Information, "Re-established correct packets sequence on  [occured %i times]",  recoveryCounter);
       // 	recoveryCounter = 0;
       // }
-      // if(previousPacketTooOldErrorCounter > 0) {
-      // 	AssertErrorCondition(Warning,"ATCAIocIntDrv::GetData: %s:  Data too old [occured %i times]",Name(),
-      // 			     previousPacketTooOldErrorCounter);
-      // 	previousPacketTooOldErrorCounter = 0;
-      // }
+       if(previousPacketTooOldErrorCounter > 0) {
+	 AssertErrorCondition(Warning,"ATCAIocIntDrv::GetData: %s:  Data too old [occured %i times]",Name(),
+			      previousPacketTooOldErrorCounter);
+	 previousPacketTooOldErrorCounter = 0;
+       }
       lastCounterTime = currentCounterTime;
     }
 
 #ifndef _FAKE_DEV
-
     /**
        read data from ATCA card 
-       Gets two 64 bytes packets (minimum DMA size is 128 bytes...). Discards earlier packet 
+       Gets 128 bytes packet
     */ 
     int _ret = read(devFd, dataSource, packetByteSize);
     if(_ret == -1) {
       AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: read() error");
       return;
     }
-
     // Check the buffer length
     if(_ret != packetByteSize) {
       sizeMismatchErrorCounter++;
       continue;
     }
-    dataSource[0] = lastPacketID;
-    dataSource[1] = dataSource[31]/2 -timeInit; // Time counter information from board in 0.5 us resolution.
+    //    dataSource[0] = lastPacketNo;
+    //dataSource[1] = dataSource[31]/2 -timeInit; // Time counter information from board in 0.5 us resolution.
 #else
     //Fake read
     SleepSec(1E-4);
-    dataSource[0] = lastPacketID;
-    dataSource[1] = lastPacketUsecTime++;
-    dataSource[16] = 11915;
+    dataSource[30] = lastPacketNo++;
+    dataSource[31] = lastPacketUsecTime++;
+    dataSource[0] = 11915;
 #endif
 
     // Copy dataSource in the write only buffer; does endianity swap
     Endianity::MemCopyFromIntel((uint32 *)dataBuffer[writeBuffer], (uint32 *)dataSource,
 				packetByteSize/sizeof(int32));
-    //printf("%d %d\n", writeBuffer, dataBuffer[0][0]);
     // Checks if packets have been lost
-    TimeHeaderStruct *header = (TimeHeaderStruct *)dataBuffer[writeBuffer];
+    PacketStruct *pkt = (PacketStruct *)dataBuffer[writeBuffer];
 
     // Make sure that while writeBuffer is being
     // updated it is not being read elsewhere
@@ -681,7 +655,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     writeBuffer++;
     if(writeBuffer >= nOfDataBuffers) 
       writeBuffer = 0;
-    //}
+
     freshPacket = True;
     // Unlock resource
     mux.FastUnLock();
@@ -697,46 +671,41 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       }
     */
       // If is the first packet doesn't do any check on nSampleNumber
-      if(lastPacketID != 0xFFFFFFFF) {
+    if(lastPacketNo != 0xFFFFFFFF) {
       // Checks nSampleNumber
       // Warning if a reset has happened and too much packet had been lost
       // nSampleNumber has been casted to int32 to prevent wrong casting from compiler
-	if((int32)(header->nSampleNumber)-lastPacketID < 0) {
-	  if((int32)(header->nSampleNumber) > maxNOfLostPackets) {
-	    rolloverErrorCounter++;
-	  }
-	} 
-      }	
-      else {
-	timeInit= header->nSampleTime;
+      if((int32)(pkt->nSampleNumber) - lastPacketNo < 0) {
+	if((int32)(pkt->nSampleNumber) > maxNOfLostPackets) {
+	  rolloverErrorCounter++;
+	}
+      } else { 
+	// nSampleNumber has been casted to int32 to prevent wrong casting from compiler
+	if(((int32)(pkt->nSampleNumber) - lastPacketNo) > 1) {
+	  // Warning if a packet is lost
+	  lostPacketErrorCounter++;
+	  lostPacketErrorCounterAux++;
+	}  else if(((int32)(pkt->nSampleNumber) - lastPacketNo) == 0) {
+	  // Warning if nSampleNumber in packet hasn't changed
+	   samePacketErrorCounter++;
+	} else if(lostPacketErrorCounter > 0) {
+	  recoveryCounter++;
+	  // Reset error counter
+	  lostPacketErrorCounter = 0;
+	}
       }
-	  /*
-      // nSampleNumber has been casted to int32 to prevent wrong casting from compiler
-      if(((int32)(header->nSampleNumber)-lastPacketID) > 1) {
-      // Warning if a packet is lost
-      lostPacketErrorCounter++;
-      lostPacketErrorCounterAux++;
-      } else if(((int32)(header->nSampleNumber)-lastPacketID) == 0) {
-      // Warning if nSampleNumber in packet hasn't changed
-      samePacketErrorCounter++;
-      } else if(lostPacketErrorCounter > 0) {
-      recoveryCounter++;
-      // Reset error counter
-      lostPacketErrorCounter = 0;
-      }
-      }
-      }
-    */
-    // Update lastPacketID
-    //    lastPacketID       = header->nSampleNumber;
-    //lastPacketUsecTime = header->nSampleTime;
+    }
+    
+  
+    // Update lastPacketNo
+    lastPacketNo       = pkt->nSampleNumber;
 
-    // Update 
-    lastPacketID++;
-    lastPacketUsecTime = header->nSampleTime;
+    lastPacketUsecTime= lastPacketUsecTime + 100;// = pkt->nSampleTime;
+    // This line gives error message:
+    //       [16:5:22]:localhost:FatalError:tid=0xffc8b700 ():cid=0x0:obj=GLOBAL:TimeInputGAM::Execute: Timeout on Execute
+    //lastPacketUsecTime =  pkt->nSampleTime;
     //    if ((print_n--) > 0) 
-    //printf("%d:%d ",  lastPacketID, lastPacketUsecTime);
-    //      printf("%d:%d ",  dataSource[1]);
+
     //    if ((print_n--) == 0) 
     // If the module is the timingATCAIocIntDrv call the Trigger() method of
     // the time service object
@@ -759,31 +728,16 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
 
   hStream.Printf("<h1 align=\"center\">%s</h1>\n", Name());
   
-  //    if(moduleType == ATMMODULE_RECEIVER) {
-
-  //  hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Receiver");
-  /*
-    } else if(moduleType == ATMMODULE_TRANSMITTER) {
-    hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Transmitter");
-    } else {
-    hStream.Printf("<h2 align=\"center\">Type = %s</h2>\n", "Undefined");
-    }
-    hStream.Printf("<h2 align=\"center\"> %d</h2>\n", vci);
-    if(moduleType == ATMMODULE_RECEIVER) {
-  */
   hStream.Printf("<h2 align=\"center\">ATCA device = %s</h2>\n", deviceFileName.Buffer());
   hStream.Printf("<h2 align=\"center\">Input channels = %d</h2>\n", numberOfInputChannels);
   hStream.Printf("<h2 align=\"center\">MaxDataAgeUsec = %d</h2>\n", maxDataAgeUsec);
+
   hStream.Printf("<h2 align=\"center\">MaxNOfLostPackets = %d</h2>\n", maxNOfLostPackets);
   hStream.Printf("<h2 align=\"center\">CPU mask = 0x%x</h2>\n", cpuMask);
   hStream.Printf("<h2 align=\"center\">Thread priority = %d</h2>\n", receiverThreadPriority);
-  /*  
-      } else if(moduleType == ATMMODULE_TRANSMITTER) {
-      hStream.Printf("<h2 align=\"center\">Output channels = %d</h2>\n", numberOfOutputChannels);
-      }
+  hStream.Printf("<h2 align=\"center\">lastPacketUsecTime = %d</h2>\n", lastPacketUsecTime);
+  hStream.Printf("<h2 align=\"center\">producerUsecPeriod = %d</h2>\n", producerUsecPeriod);
 
-      if(moduleType == ATMMODULE_RECEIVER) {
-  */
   // Data table 
   hStream.Printf("<table border=\"1\" align=\"center\">\n");
   hStream.Printf("<tr>\n");
@@ -796,46 +750,46 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
   int32 idx;
 
   hStream.Printf("<tr>\n");
-  hStream.Printf("<td>PacketID</td>\n");
+  hStream.Printf("<td>Packet Number</td>\n");
   for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
     idx = writeBuffer-1-i;
     if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
     if(dataBuffer[idx] != NULL) {
-      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+0));
+      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+30));
     }
   }
   hStream.Printf("</tr>\n");
-  
+
   hStream.Printf("<tr>\n");
   hStream.Printf("<td>PacketUsecTime (usec)</td>\n");
   for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
     idx = writeBuffer-1-i;
     if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
     if(dataBuffer[idx] != NULL) {
-      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+1));
+      hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+31));
     }
   }
   hStream.Printf("</tr>\n");
     
   hStream.Printf("<tr>\n");
-  hStream.Printf("<td>Channel1</td>\n");
+  hStream.Printf("<td>Channel 0</td>\n");
   for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
     idx = writeBuffer-1-i;
     if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
     if(dataBuffer[idx] != NULL) {
-      hStream.Printf("<td>%d</td>", *(dataBuffer[idx]+ 16));
+      hStream.Printf("<td>%d</td>", *(dataBuffer[idx]));
       //	hStream.Printf("<td>%u</td>", *(dataBuffer[idx]+packetByteSize/sizeof(int32)-1));
     }
   }
   hStream.Printf("</tr>\n");
   hStream.Printf("<tr>\n");
 
-  hStream.Printf("<td>Channel2</td>\n");
+  hStream.Printf("<td>Channel 1</td>\n");
   for(int32 i = 0 ; i < nOfDataBuffers ; i++) {
     idx = writeBuffer-1-i;
     if(idx < 0) idx = nOfDataBuffers-(int32)fabs(idx);
     if(dataBuffer[idx] != NULL) {
-      hStream.Printf("<td>%d</td>", *(dataBuffer[idx]+ 17));
+      hStream.Printf("<td>%d</td>", *(dataBuffer[idx]+ 1));
     }
   }
   hStream.Printf("</tr>\n");

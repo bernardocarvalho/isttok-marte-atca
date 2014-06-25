@@ -22,7 +22,8 @@
 # $Id$
 #
 #############################################################
-OBJSX=
+# C files
+OBJSX=atca-ioc-int-lib.x
 
 MAKEDEFAULTDIR=../../MakeDefaults
 

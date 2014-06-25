@@ -24,7 +24,6 @@
 
 #if !defined (_ATCAIOC_DRV)
 #define _ATCAIOC_DRV
-//#define MAX_SDU		4096
 
 #include "System.h"
 #include "GenericAcqModule.h"
@@ -32,9 +31,8 @@
 /// Number buffers for data storage
 static const int nOfDataBuffers = 3;
 /// ATCAIOC Module type constants
-/* static const int ATCAIOCMODULE_UNDEFINED     = -1; */
-/* static const int ATCAIOCMODULE_RECEIVER       = 0; */
-/* static const int ATCAIOCMODULE_TRANSMITTER    = 1; */
+static const int packetByteSize = 128;
+
 
 OBJECT_DLL(ATCAIocIntDrv)
 
@@ -86,7 +84,7 @@ private:
  //int32                  moduleType;
 
     /**   Input/Output Buffer Size in Byte */
-    int32                  packetByteSize;
+ //    int32                  packetByteSize;
 
     /** Fast mutex to protect reading and writing buffer */
     FastPollingMutexSem    mux;
@@ -119,8 +117,8 @@ private:
     /** Max number of lost packets after a rollover */
     int32                  maxNOfLostPackets;
 
-    /** Last packetId received */
-    int32                  lastPacketID;
+    /** Last packet Number received */
+    int32                  lastPacketNo;
 
     /** The nSampleTime in the header of the last packet */
     int32                  lastPacketUsecTime;
