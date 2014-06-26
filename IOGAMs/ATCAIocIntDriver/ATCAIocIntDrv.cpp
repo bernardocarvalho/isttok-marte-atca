@@ -29,7 +29,7 @@
 #include "Endianity.h"
 #include "CDBExtended.h"
 #include "FastPollingMutexSem.h"
-//#include "atca-ioc-int-lib.h"
+#include "atca-ioc-int-lib.h"
 //#include "atca-ioc-int.h"
 #include "atca-ioc-int-ioctl.h"
 
@@ -42,13 +42,15 @@
 
 #define DMA_SIZE 128 // (DMA_MAX_BYTES/16/2/32) //  32 ok
 
+int init_device(int fd);
+int stop_device(int fd);
+
+
 /***************/
 int init_device(int fd)
 {
   int  tmp, tmp0, rc,i;
-  //OFFSET_REGS off_s;
 
-  //  usleep(100);
   //rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);// Get FPGA STATUS to check if properly initialized (optional)
   //printf("FPGA Status: 0x%.8X\n", tmp);
 
@@ -65,6 +67,9 @@ int init_device(int fd)
 
   tmp = DMA_SIZE;
   rc  =  ioctl(fd, PCIE_ATCA_IOCS_DMA_SIZE, &tmp);
+  tmp = DMA_SIZE;
+  rc  =  ioctl(fd, PCIE_ATCA_IOCS_DMA_THRES, &tmp);
+
   rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_ON);
 
   //Set the Chop's period, in this case is 2000 times the period of the acquisition period.
@@ -104,15 +109,16 @@ int init_device(int fd)
   rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
 
   rc = ioctl(fd, PCIE_ATCA_IOCT_ACQ_ENABLE);  // Arm the FPGA to wait for external trigger
+
   usleep(10);
   //  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
   //printf("FPGA ACQ Status: 0x%.8X\n", tmp);
   //tmp = 0;
-
   rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_ENABLE);
+  usleep(100);
   //  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
   //printf("FPGA STRE Status: 0x%.8X\n", tmp);
-  rc = ioctl(fd, PCIE_ATCA_IOCT_SOFT_TRIG);
+  rc = ioctl(fd, PCIE_ATCA_IOCT_SOFT_TRIG); // reset time counter on board
   usleep(10);
   //tmp = 0;
   //rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
@@ -157,7 +163,6 @@ static const int32 timingATCAIocIntDrv = 400;
 bool ATCAIocIntDrv::EnableAcquisition(){
   // Initialise lastPacketNo equal to 0xFFFFFFFF
   lastPacketNo = 0xFFFFFFFF;
-  // Set the chip on line
 
   if (liveness!=-1){
     AssertErrorCondition(Warning, "ATCAIocIntDrv::EnableAcquisition: ATCA device  already alive");
@@ -195,8 +200,8 @@ bool ATCAIocIntDrv::DisableAcquisition(){
   max_buf_count=0;
 #endif
 
-  if(max_buf_count > 16){
-    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::DisableAcquisition: %s: DMA buffers overrun: %d: %s",Name(), max_buf_count, deviceFileName.Buffer());
+  if(max_buf_count > 15){
+    AssertErrorCondition(Warning,"ATCAIocIntDrv::DisableAcquisition: %s: DMA buffers overrun: %d on %s",Name(), max_buf_count, deviceFileName.Buffer());
     return False;
   }
   close(devFd);
@@ -217,7 +222,7 @@ bool  ATCAIocIntDrv::Init(){
   numberOfDigitalOutputChannels           = 0;
   //moduleType                          = ATCAIOCMODULE_UNDEFINED;
   mux.Create();
-  //  packetByteSize                      = 0;
+
   // Init receiver parameters
   writeBuffer                         = 0;
   globalReadBuffer                    = 0;
@@ -240,9 +245,9 @@ bool  ATCAIocIntDrv::Init(){
   receiverThreadPriority              = 0;
   freshPacket                         = False;
   // reset all buffers pointers 
-  //for(int i = 0 ; i < nOfDataBuffers ; i++) {
-  //  dataBuffer[i] = NULL;
-  //}
+  for(int i = 0 ; i < nOfDataBuffers ; i++) 
+    dataBuffer[i] = NULL;
+  
   return True;
 }
 
@@ -286,22 +291,6 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s GenericAcqModule::ObjectLoadSetup Failed",Name());
     return False;
   }
-
-
-  // Read ModuleType IN/OUT
-  // FString module;
-  // if(!cdb.ReadFString(module,"ModuleType")){
-  //   AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s did not specify ModuleType entry",Name());
-  //   return False;
-  // }
-  // if(module == "InputModule"){
-  //   moduleType = ATCAIOCMODULE_RECEIVER;
-  // }else if(module == "OutputModule"){
-  //   moduleType = ATCAIOCMODULE_TRANSMITTER;
-  // }else{
-  //   AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s unknown module type %s",Name(),module.Buffer());
-  //   return False;
-  // }
 
   if(!cdb.ReadFString(deviceFileName,"DeviceFileName")){
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s: DeviceFileName has to be specified",Name());
@@ -567,7 +556,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
     Threads::SetPriorityLevel(receiverThreadPriority);
   }
 
-  //  int print_n=10;
+  int print_n=10;
   //  int timeInit=0;
   // Allocate
   int32 *dataSource;
@@ -610,7 +599,7 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       // 	recoveryCounter = 0;
       // }
        if(previousPacketTooOldErrorCounter > 0) {
-	 AssertErrorCondition(Warning,"ATCAIocIntDrv::GetData: %s:  Data too old [occured %i times]",Name(),
+	 AssertErrorCondition(Warning,"ATCAIocIntDrv::RecCallback: %s:  Data too old [occured %i times]",Name(),
 			      previousPacketTooOldErrorCounter);
 	 previousPacketTooOldErrorCounter = 0;
        }
@@ -632,8 +621,6 @@ void ATCAIocIntDrv::RecCallback(void* arg){
       sizeMismatchErrorCounter++;
       continue;
     }
-    //    dataSource[0] = lastPacketNo;
-    //dataSource[1] = dataSource[31]/2 -timeInit; // Time counter information from board in 0.5 us resolution.
 #else
     //Fake read
     SleepSec(1E-4);
@@ -695,15 +682,24 @@ void ATCAIocIntDrv::RecCallback(void* arg){
 	}
       }
     }
-    
-  
+
+ 
     // Update lastPacketNo
     lastPacketNo       = pkt->nSampleNumber;
+    if(print_n-- >0 ){
+      printf("%d:%d ", lastPacketNo, pkt->nSampleTime);
+      //      print_n--;
+    }
+    if(print_n == 0)
+       printf("\n");
+    //    lastPacketUsecTime =  pkt->nSampleTime + 1 ;
+    //else
+    lastPacketUsecTime =  lastPacketNo * 100;
 
-    lastPacketUsecTime= lastPacketUsecTime + 100;// = pkt->nSampleTime;
+    //lastPacketUsecTime= lastPacketUsecTime + 100;// = pkt->nSampleTime;
     // This line gives error message:
     //       [16:5:22]:localhost:FatalError:tid=0xffc8b700 ():cid=0x0:obj=GLOBAL:TimeInputGAM::Execute: Timeout on Execute
-    //lastPacketUsecTime =  pkt->nSampleTime;
+    //    lastPacketUsecTime =  pkt->nSampleTime;
     //    if ((print_n--) > 0) 
 
     //    if ((print_n--) == 0) 
