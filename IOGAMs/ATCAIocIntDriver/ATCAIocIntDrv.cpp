@@ -249,8 +249,8 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       return False;
     }
     */
-    if(!cdb.ReadInt32(numberOfAnalogueInputChannels, "NumberOfAnalogueInput")){
-      CStaticAssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: NumberOfAnalogueInput has not been specified.");
+    if(!cdb.ReadInt32(numberOfAnalogueInputChannels, "NumberOfAnalogueInputs")){
+      CStaticAssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: NumberOfAnalogueInputs has not been specified.");
       return False;
     }
     adc_offset_vector =  new int[numberOfAnalogueInputChannels];
@@ -259,7 +259,8 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
 	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s Could not load AdcOffsets vector", this->Name());
 	return False;
       }
-
+    for(int i=0 ; i < numberOfAnalogueInputChannels ; i++)
+      printf("adc%d, %d ", i, adc_offset_vector[i] );
     cdb.ReadInt32(softwareTrigger, "SoftwareTrigger", 0);
     /// Read the UsecPeriod of the ATCAIocInt packet producer
     cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);

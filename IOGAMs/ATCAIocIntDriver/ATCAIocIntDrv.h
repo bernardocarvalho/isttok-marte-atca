@@ -27,7 +27,7 @@
 
 #include "System.h"
 #include "GenericAcqModule.h"
-#include "atca-ioc-int-ioctl.h"
+//#include "atca-ioc-int-ioctl.h"
 #include "ATCAIocBoard.h"
 
 /* ATCAIOC Module type constants */

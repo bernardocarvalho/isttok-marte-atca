@@ -22,6 +22,9 @@
  *
 **/
 
+#if !defined (_ATCAIOC_BRD)
+#define _ATCAIOC_BRD
+
 #define DMA_SIZE 128
 
 //OBJECT_DLL(ATCAIocBoard)
@@ -54,3 +57,5 @@ class ATCAIocBoard {
   int read_packet(void * , int );
 
 };
+
+#endif  // _ATCAIOC_BRD
