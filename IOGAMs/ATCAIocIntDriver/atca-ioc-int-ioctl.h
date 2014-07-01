@@ -12,7 +12,7 @@
 #ifndef _PCIE_ATCA_IOCTL_H_
 #define _PCIE_ATCA_IOCTL_H_
 
-//#include "atca-ioc-int.h"
+#include <sys/ioctl.h>
 
 /*
  * IOCTL definitions

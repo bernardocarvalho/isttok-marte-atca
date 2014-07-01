@@ -29,9 +29,10 @@
 #include "Endianity.h"
 #include "CDBExtended.h"
 #include "FastPollingMutexSem.h"
-#include "atca-ioc-int-lib.h"
+//#include "atca-ioc-int-lib.h"
 //#include "atca-ioc-int.h"
-#include "atca-ioc-int-ioctl.h"
+//#include "atca-ioc-int-ioctl.h"
+
 
 //#define _FAKE_DEV
 
@@ -40,110 +41,10 @@
 
 //#define SAMP_PER_PACKET (DMA_SIZE/NCHANNELS/sizeof(int32_t)) // 2048
 
-#define DMA_SIZE 128 // (DMA_MAX_BYTES/16/2/32) //  32 ok
+//#define DMA_SIZE 128 // (DMA_MAX_BYTES/16/2/32) //  32 ok
 
-int init_device(int fd);
-int stop_device(int fd);
-
-
-/***************/
-int init_device(int fd)
-{
-  int  tmp, tmp0, rc,i;
-
-  //rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);// Get FPGA STATUS to check if properly initialized (optional)
-  //printf("FPGA Status: 0x%.8X\n", tmp);
-
-  rc = ioctl(fd, PCIE_ATCA_IOCG_COUNTER, &tmp0);
-  printf("FPGA Counter: 0x%.8X, %d", tmp0, tmp0);
-  usleep(10000);
-  // sleep(1);
-  rc = ioctl(fd, PCIE_ATCA_IOCG_COUNTER, &tmp);
-  printf(" +10ms Counter: %d, diff: %d\n", tmp, tmp - tmp0);
-  rc = ioctl(fd, PCIE_ATCA_IOCT_CHOP_ON); //Set the Chop on
-  rc = ioctl(fd, PCIE_ATCA_IOCT_CHOP_DEFAULT_0); // TODO: Change ioctl name
-  //The signal is  to be reconstruted inside the FPGA 
-  rc = ioctl(fd, PCIE_ATCA_IOCT_CHOP_RECONSTRUCT_ON);
-
-  tmp = DMA_SIZE;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_DMA_SIZE, &tmp);
-  tmp = DMA_SIZE;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_DMA_THRES, &tmp);
-
-  rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_ON);
-
-  //Set the Chop's period, in this case is 2000 times the period of the acquisition period.
-  //(2000) The Chop's frequency will be 1kHz
-  tmp = 2000;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_CHOP_MAX_COUNT, &tmp);
-  tmp = 1000;
-  rc = ioctl(fd, PCIE_ATCA_IOCS_CHOP_CHANGE_COUNT, &tmp);
-
-  /* Reset ADC offsets*/
-  for (i=0; i < 64; i++) {
-    tmp = i;
-    rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-    tmp = 0;
-    rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-  }
-
-  /* Set 0, 1 ADC offsets*/
-  tmp = 0;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = -613;
-  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-  tmp = 1;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = -244;
-  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-
-  /* Set Integral offsets*/
-  tmp = 32;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = - 12000 ; //- (65536 *  0.2);
-  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-
-  tmp = 33;
-  rc  =  ioctl(fd, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = -15000;// //- (65536 *  0.2);
-  rc = ioctl(fd, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-
-  rc = ioctl(fd, PCIE_ATCA_IOCT_ACQ_ENABLE);  // Arm the FPGA to wait for external trigger
-
-  usleep(10);
-  //  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
-  //printf("FPGA ACQ Status: 0x%.8X\n", tmp);
-  //tmp = 0;
-  rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_ENABLE);
-  usleep(100);
-  //  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
-  //printf("FPGA STRE Status: 0x%.8X\n", tmp);
-  rc = ioctl(fd, PCIE_ATCA_IOCT_SOFT_TRIG); // reset time counter on board
-  usleep(10);
-  //tmp = 0;
-  //rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
-  //printf("FPGA TRG Status: 0x%.8X\n", tmp);
-
-  return rc;
-}
-
-int stop_device(int fd){
-
-  int tmp, rc, max_buf_count;
-
-  // this IOCTL returns the nr of times the driver IRQ handler was called while there was still 1 or more buffers waiting to be read
-  max_buf_count = ioctl(fd, PCIE_ATCA_IOCT_ACQ_DISABLE);// Stop streaming and un-arm the FPGA.
-
-  rc = ioctl(fd, PCIE_ATCA_IOCT_STREAM_DISABLE);
-  usleep(100);
-
-  rc = ioctl(fd, PCIE_ATCA_IOCT_INTEGRAL_CALC_OFF);
-
-  rc = ioctl(fd, PCIE_ATCA_IOCG_STATUS, &tmp);
-  printf("ACQ Stopped, FPGA  Status: 0x%.8X, max buff_count: %d \n", tmp, max_buf_count);
-  // close(fd);
-  return max_buf_count;
-}
+//int init_device(int fd);
+//int stop_device(int fd);
 
 
 struct PacketStruct{
@@ -170,14 +71,26 @@ bool ATCAIocIntDrv::EnableAcquisition(){
   }
 
 #ifndef _FAKE_DEV
+  if(board.dev_open(deviceFileName.Buffer())){
+    AssertErrorCondition(Information,"ATCAIocIntDrv::EnableAcquisition: %s: Successfully open dev node %s", Name(), deviceFileName.Buffer());
+
+  }
+  else {
+    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::EnableAcquisition: %s: Could not open device node: %s",Name(), deviceFileName.Buffer());
+    return False;
+  }
+
+    /*
   devFd = open(deviceFileName.Buffer(), O_RDWR);
   if(devFd < 1){
     AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::EnableAcquisition: %s: Could not open device node: %s",Name(), deviceFileName.Buffer());
     return False;
   }
   init_device(devFd);
+    */
+  board.init_device();
 #else
-  devFd = open("/dev/null", O_RDWR);
+  //  devFd = open("/dev/null", O_RDWR);
 #endif
 
   liveness++;
@@ -195,7 +108,7 @@ bool ATCAIocIntDrv::DisableAcquisition(){
     return False;
   }
 #ifndef _FAKE_DEV
-  max_buf_count= stop_device(devFd);
+  max_buf_count = board.stop_device();
 #else
   max_buf_count=0;
 #endif
@@ -204,7 +117,8 @@ bool ATCAIocIntDrv::DisableAcquisition(){
     AssertErrorCondition(Warning,"ATCAIocIntDrv::DisableAcquisition: %s: DMA buffers overrun: %d on %s",Name(), max_buf_count, deviceFileName.Buffer());
     return False;
   }
-  close(devFd);
+  board.dev_close();
+  //close(devFd);
   liveness--;
   return True;
 }
@@ -214,12 +128,13 @@ bool ATCAIocIntDrv::DisableAcquisition(){
  */
 bool  ATCAIocIntDrv::Init(){
   // Init general parameters
-  devFd                                   = 0;
+  //devFd                                   = 0;
   moduleIdentifier                        = 0;
   numberOfAnalogueInputChannels           = 0;
   numberOfDigitalInputChannels            = 0;
   numberOfAnalogueOutputChannels          = 0;
   numberOfDigitalOutputChannels           = 0;
+  softwareTrigger                         = 0;
   //moduleType                          = ATCAIOCMODULE_UNDEFINED;
   mux.Create();
 
@@ -329,11 +244,23 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       AssertErrorCondition(Warning, "ATCAIocIntDrv::ObjectLoadSetup: %s ThreadPriority parameter not specified", Name());
     }
 
-    if(!cdb.ReadInt32(numberOfInputChannels, "NumberOfInputs")){
+    /*    if(!cdb.ReadInt32(numberOf1InputChannels, "NumberOfInputs")){
       CStaticAssertErrorCondition(InitialisationError,"SingleATCAModule::ObjectLoadSetup: NumberOfInputs has not been specified.");
       return False;
     }
-	
+    */
+    if(!cdb.ReadInt32(numberOfAnalogueInputChannels, "NumberOfAnalogueInput")){
+      CStaticAssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: NumberOfAnalogueInput has not been specified.");
+      return False;
+    }
+    adc_offset_vector =  new int[numberOfAnalogueInputChannels];
+   if(!cdb.ReadInt32Array(adc_offset_vector, (int *)(& numberOfAnalogueInputChannels), 1, "AdcOffsets"))
+      {
+	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s Could not load AdcOffsets vector", this->Name());
+	return False;
+      }
+
+    cdb.ReadInt32(softwareTrigger, "SoftwareTrigger", 0);
     /// Read the UsecPeriod of the ATCAIocInt packet producer
     cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
 
@@ -513,6 +440,26 @@ int64 ATCAIocIntDrv::GetUsecTime(){
 }
 
 /**
+ * PulseStart
+ */
+bool ATCAIocIntDrv::PulseStart() {
+  //rc = 
+  if(softwareTrigger!=0){
+    board.soft_trigger();
+    /*
+;
+    if(ioctl(devFd, PCIE_ATCA_IOCT_SOFT_TRIG)>0){ // reset time counter on board
+      usleep(10);
+      return True;
+    }
+    else
+	return False;
+    */
+  }
+  return True;
+}
+
+/**
  * ObjectDescription
  */
 bool ATCAIocIntDrv::ObjectDescription(StreamInterface &s, bool full, StreamInterface *err){
@@ -611,7 +558,8 @@ void ATCAIocIntDrv::RecCallback(void* arg){
        read data from ATCA card 
        Gets 128 bytes packet
     */ 
-    int _ret = read(devFd, dataSource, packetByteSize);
+    int _ret = board.read_packet(dataSource, packetByteSize);
+      //read(devFd, dataSource, packetByteSize);
     if(_ret == -1) {
       AssertErrorCondition(FatalError,"ATCAIocIntDrv::RecCallback: read() error");
       return;
@@ -725,7 +673,7 @@ bool ATCAIocIntDrv::ProcessHttpMessage(HttpStream &hStream) {
   hStream.Printf("<h1 align=\"center\">%s</h1>\n", Name());
   
   hStream.Printf("<h2 align=\"center\">ATCA device = %s</h2>\n", deviceFileName.Buffer());
-  hStream.Printf("<h2 align=\"center\">Input channels = %d</h2>\n", numberOfInputChannels);
+  hStream.Printf("<h2 align=\"center\">Analogue Input channels = %d</h2>\n", numberOfAnalogueInputChannels); //numberOfInputChannels
   hStream.Printf("<h2 align=\"center\">MaxDataAgeUsec = %d</h2>\n", maxDataAgeUsec);
 
   hStream.Printf("<h2 align=\"center\">MaxNOfLostPackets = %d</h2>\n", maxNOfLostPackets);

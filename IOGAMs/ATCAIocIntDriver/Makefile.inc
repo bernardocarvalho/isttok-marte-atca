@@ -23,7 +23,8 @@
 #
 #############################################################
 # C files
-OBJSX=atca-ioc-int-lib.x
+#OBJSX=atca-ioc-int-lib.x
+OBJSX=ATCAIocBoard.x
 
 MAKEDEFAULTDIR=../../MakeDefaults
 

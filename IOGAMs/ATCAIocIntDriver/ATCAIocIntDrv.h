@@ -27,276 +27,272 @@
 
 #include "System.h"
 #include "GenericAcqModule.h"
+#include "atca-ioc-int-ioctl.h"
+#include "ATCAIocBoard.h"
 
-/// Number buffers for data storage
+/* ATCAIOC Module type constants */
+/* Number buffers for data storage */
 static const int nOfDataBuffers = 3;
-/// ATCAIOC Module type constants
+/**   Input/Output Buffer Size in Byte */
 static const int packetByteSize = 128;
-
 
 OBJECT_DLL(ATCAIocIntDrv)
 
 // Callback declaration
- void ReceiverCallback(void *userData);
+void ReceiverCallback(void *userData);
 
 /// ATCAIOC Module Class
 class ATCAIocIntDrv : public GenericAcqModule {
 
-OBJECT_DLL_STUFF(ATCAIocIntDrv)
+  OBJECT_DLL_STUFF(ATCAIocIntDrv)
 
-/// Receiver CallBack
-friend void ReceiverCallback(void *userData);
+    /// Receiver CallBack
+    friend void ReceiverCallback(void *userData);
 
-private:
+ private:
 
-/** device name **/ 
+  /** device name **/ 
   FString deviceFileName;
 
-/** The file descriptor associated to this board*/
- int devFd;
+  /** The file descriptor associated to this board*/
+  //  int devFd;
 
- /** Module Identifier */
- int32        moduleIdentifier;
+  ATCAIocBoard board;
+  /** Module Identifier */
+  int32        moduleIdentifier;
 
- /** Number of Analogue Input channels for this module (Maximum 32)*/
- int32        numberOfAnalogueInputChannels;
+  /** Number of Analogue Input channels for this module (Maximum 32)*/
+  int32        numberOfAnalogueInputChannels;
 
- /** Number of Digital Input channels for this module  (1 or 0)    */
- int32        numberOfDigitalInputChannels;
+  /** Number of Digital Input channels for this module  (1 or 0)    */
+  int32        numberOfDigitalInputChannels;
 
- /** Number of Analogue Output channels                (Maximum 8) */
- int32        numberOfAnalogueOutputChannels;
+  /** Number of Analogue Output channels                (Maximum 8) */
+  int32        numberOfAnalogueOutputChannels;
 
- /** Number of Digital Output channels                 ()          */
- int32        numberOfDigitalOutputChannels;
+  /** Number of Digital Output channels                 ()          */
+  int32        numberOfDigitalOutputChannels;
 
- /** Returns the sum of analogue and digital input channels */
- int32 NumberOfInputChannels(){
-   return numberOfDigitalInputChannels + numberOfAnalogueInputChannels;
- }
+  /*Perform Software Trigger on PRE*/
+  int        softwareTrigger;
+
+  /** Returns the sum of analogue and digital input channels */
+  int32 NumberOfInputChannels(){
+    //   return numberOfDigitalInputChannels + numberOfAnalogueInputChannels;
+    return  numberOfAnalogueInputChannels;
+  }
  
+  /** Fast mutex to protect reading and writing buffer */
+  FastPollingMutexSem    mux;
 
-    /**   GAM Type (Input/Output)
-          -1 --> ATCAIOCMODULE_UNDEFINED
-           0 --> ATCAIOCMODULE_RECEIVER      (DDBOutputInterface)
-           1 --> ATCAIOCMODULE_TRANSMITTER   (DDBInputInterface)
-    */
- //int32                  moduleType;
+  /** bool to flag if packet is fresh */
+  bool                   freshPacket;
 
-    /**   Input/Output Buffer Size in Byte */
- //    int32                  packetByteSize;
+  /**   Init all module entries */
+  bool                   Init();
 
-    /** Fast mutex to protect reading and writing buffer */
-    FastPollingMutexSem    mux;
 
-    /** bool to flag if packet is fresh */
-    bool                   freshPacket;
+  ///////////////////////////////////////////////////////////////////////////////
+  //                           Receiver Type Module                            //
+  ///////////////////////////////////////////////////////////////////////////////
+ private:
 
-    /**   Init all module entries */
-    bool                   Init();
+  /** Triple buffer for receiver type module */
+  uint32                 *dataBuffer[nOfDataBuffers];
 
-///////////////////////////////////////////////////////////////////////////////
-//                           Receiver Type Module                            //
-///////////////////////////////////////////////////////////////////////////////
-private:
-
-    /** Triple buffer for receiver type module */
-    uint32                 *dataBuffer[nOfDataBuffers];
-
-    /** Index of the write only buffer.
-        The next write only buffer index is equal to (writeBuffer+1)%3
-        The read only buffer index is equal to (writeBuffer+2)%3 */
-    int32                   writeBuffer;
+  /** Index of the write only buffer.
+      The next write only buffer index is equal to (writeBuffer+1)%3
+      The read only buffer index is equal to (writeBuffer+2)%3 */
+  int32                   writeBuffer;
     
-    /** */
-    int32                   globalReadBuffer;
+  /** */
+  int32                   globalReadBuffer;
 
-    /** Max data age in usec. It is used to decided if the read data are ready or not */
-    int32                  maxDataAgeUsec;
+  /** Max data age in usec. It is used to decided if the read data are ready or not */
+  int32                  maxDataAgeUsec;
 
-    /** Max number of lost packets after a rollover */
-    int32                  maxNOfLostPackets;
+  /** Max number of lost packets after a rollover */
+  int32                  maxNOfLostPackets;
 
-    /** Last packet Number received */
-    int32                  lastPacketNo;
+  /** Last packet Number received */
+  int32                  lastPacketNo;
 
-    /** The nSampleTime in the header of the last packet */
-    int32                  lastPacketUsecTime;
+  /** The nSampleTime in the header of the last packet */
+  int32                  lastPacketUsecTime;
 
-    /** Packet producer specified microsecond period */
-    int32                  producerUsecPeriod;
+  /** Packet producer specified microsecond period */
+  int32                  producerUsecPeriod;
 
-    /** Only used with the producerUsecPeriod and contains the 
-     * nSampleNumber of the last packet */
-    uint32                 originalNSampleNumber;
+  /** Only used with the producerUsecPeriod and contains the 
+   * nSampleNumber of the last packet */
+  uint32                 originalNSampleNumber;
 
-    /** Used to store HRTCounter to check producerUsecPeriod */
-    int64                  lastCounter;
+  /** Used to store HRTCounter to check producerUsecPeriod */
+  int64                  lastCounter;
 
-    /** CPU mask of the receiver thread (in case it's a receiver module) */
-    int32                  cpuMask;
+  /** CPU mask of the receiver thread (in case it's a receiver module) */
+  int32                  cpuMask;
 
-    /** Enable the System Acquisition */
-    bool EnableAcquisition();
+  int32 *  adc_offset_vector;
 
-    /** Disable the System Acquisition */
-    bool DisableAcquisition();
+  /** Enable the System Acquisition */
+  bool EnableAcquisition();
 
-    /** Receive callback method */
-    void RecCallback(void* arg);
+  /** Disable the System Acquisition */
+  bool DisableAcquisition();
 
-    /** Flag to control the receiving thread */    
-    bool                    keepRunning;
+  /** Receive callback method */
+  void RecCallback(void* arg);
 
-    /** The id of the receiving thread */
-    TID                     threadID;
+  /** Flag to control the receiving thread */    
+  bool                    keepRunning;
 
-    /** Receiver thread priority within real time class */
-    int32                   receiverThreadPriority;
+  /** The id of the receiving thread */
+  TID                     threadID;
 
-     /** Dumps Input Data to the Stream
-        @param s output stream
-     */
-    bool InputDump(StreamInterface &s) const;
+  /** Receiver thread priority within real time class */
+  int32                   receiverThreadPriority;
 
-    /** Driver liveness */
-    int liveness;
+  /** Dumps Input Data to the Stream
+      @param s output stream
+  */
+  bool InputDump(StreamInterface &s) const;
 
-public:
+  /** Driver liveness */
+  int liveness;
 
-    /** Gets Data From the Module to the DDB
-        @param usecTime Microseconds Time
-        @return -1 on Error, 1 on success
-    */
-    int32 GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber = 0);
+ public:
 
-///////////////////////////////////////////////////////////////////////////////
-//                           Transmitter Type Module                         //
-///////////////////////////////////////////////////////////////////////////////
-private:
+  /** Gets Data From the Module to the DDB
+      @param usecTime Microseconds Time
+      @return -1 on Error, 1 on success
+  */
+  int32 GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber = 0);
 
-    /** The actual packet to be sent */
-    void                  *outputPacket;
+  ///////////////////////////////////////////////////////////////////////////////
+  //                           Transmitter Type Module                         //
+  ///////////////////////////////////////////////////////////////////////////////
+ private:
 
-    /** Dumps the module outputs on the Stream */
-    bool OutputDump(StreamInterface &s)const;
+  /** The actual packet to be sent */
+  void                  *outputPacket;
 
-public:
+  /** Dumps the module outputs on the Stream */
+  bool OutputDump(StreamInterface &s)const;
 
-    /** Sends the data in the DDB to the ATCA board */
-    bool WriteData(uint32 usecTime, const int32 *buffer);
+ public:
 
-///////////////////////////////////////////////////////////////////////////////
-//                           Monitoring Counters                             //
-///////////////////////////////////////////////////////////////////////////////
-private:
+  /** Sends the data in the DDB to the ATCA board */
+  bool WriteData(uint32 usecTime, const int32 *buffer);
 
-    /** Counts the number of size mismatch events. Reset as soon as the first correct packet is received */
-    int32                  sizeMismatchErrorCounter;
+  ///////////////////////////////////////////////////////////////////////////////
+  //                           Monitoring Counters                             //
+  ///////////////////////////////////////////////////////////////////////////////
+ private:
 
-    /** Counts the number of packet was too old. Reset as soon as the first correct packet is received */
-    int32                  previousPacketTooOldErrorCounter;
+  /** Counts the number of size mismatch events. Reset as soon as the first correct packet is received */
+  int32                  sizeMismatchErrorCounter;
 
-    /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
-    int32                  lostPacketErrorCounter;
+  /** Counts the number of packet was too old. Reset as soon as the first correct packet is received */
+  int32                  previousPacketTooOldErrorCounter;
 
-    /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
-    int32                  lostPacketErrorCounterAux;
+  /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
+  int32                  lostPacketErrorCounter;
 
-    /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
-    int32                  samePacketErrorCounter;
+  /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
+  int32                  lostPacketErrorCounterAux;
 
-    /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
-    int32                  recoveryCounter;
+  /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
+  int32                  samePacketErrorCounter;
 
-    /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
-    int32                  rolloverErrorCounter;
+  /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
+  int32                  recoveryCounter;
 
-    /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
-    int32                  deviationErrorCounter;
+  /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
+  int32                  rolloverErrorCounter;
 
-///////////////////////////////////////////////////////////////////////////////
-//                           Init & Mixed routine                            //
-///////////////////////////////////////////////////////////////////////////////
-private:    
+  /** Counts the number of lost packets. Reset as soon as the first correct packet is received */
+  int32                  deviationErrorCounter;
 
-    /** Copy constructors (since it is defined private it won't allow a public use!!) */
-    ATCAIocIntDrv(const ATCAIocIntDrv&){};
+  ///////////////////////////////////////////////////////////////////////////////
+  //                           Init & Mixed routine                            //
+  ///////////////////////////////////////////////////////////////////////////////
+ private:    
 
-    /** Operator=  (since it is defined private it won't allow a public use!!) */
-    ATCAIocIntDrv& operator=(const ATCAIocIntDrv&){};
+  /** Copy constructors (since it is defined private it won't allow a public use!!) */
+  ATCAIocIntDrv(const ATCAIocIntDrv&){};
 
-    /** Per board file descriptor */
-    //   int fd_atca;
+  /** Operator=  (since it is defined private it won't allow a public use!!) */
+  ATCAIocIntDrv& operator=(const ATCAIocIntDrv&){};
 
-public:
+  /** Per board file descriptor */
+  //   int fd_atca;
 
-    /** Constructor */
-    ATCAIocIntDrv();
+ public:
 
-    /** Deconstructor */
-    ~ATCAIocIntDrv();
+  /** Constructor */
+  ATCAIocIntDrv();
 
-    /** Load Object Parameters from the ConfigurationDataBase */
-    virtual bool ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *err);
+  /** Deconstructor */
+  ~ATCAIocIntDrv();
 
-    /** Saves Object Parameters to the ConfigurationDataBase */
-    virtual bool ObjectSaveSetup(ConfigurationDataBase &info,StreamInterface *err){return True;};
+  /** Load Object Parameters from the ConfigurationDataBase */
+  virtual bool ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *err);
 
-    /** Object Description */
-    virtual bool ObjectDescription(StreamInterface &s,bool full,StreamInterface *err);
+  /** Saves Object Parameters to the ConfigurationDataBase */
+  virtual bool ObjectSaveSetup(ConfigurationDataBase &info,StreamInterface *err){return True;};
 
-    /** Set board used as input */
-    virtual bool SetInputBoardInUse(bool on = True) {
-        /* if(moduleType == ATCAIOCMODULE_TRANSMITTER) { */
-        /*     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is a Transmitter", Name()); */
-        /*     return False; */
-        /* } */
-        if(inputBoardInUse && on) {
-            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is already in use", Name());
-            return False;
-        }
-        inputBoardInUse  = on;
-        outputBoardInUse = on;
-        return True;
+  /** Object Description */
+  virtual bool ObjectDescription(StreamInterface &s,bool full,StreamInterface *err);
+
+  /** Set board used as input */
+  virtual bool SetInputBoardInUse(bool on = True) {
+    /* if(moduleType == ATCAIOCMODULE_TRANSMITTER) { */
+    /*     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is a Transmitter", Name()); */
+    /*     return False; */
+    /* } */
+    if(inputBoardInUse && on) {
+      AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetInputBoardInUse: Board %s is already in use", Name());
+      return False;
     }
+    inputBoardInUse  = on;
+    outputBoardInUse = on;
+    return True;
+  }
 
-    /** Set board used as output */
-    virtual bool SetOutputBoardInUse(bool on = True) {
-        /* if(moduleType == ATCAIOCMODULE_RECEIVER) { */
-        /*     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is a Receiver", Name()); */
-        /*     return False; */
-        /* } */
-        if(outputBoardInUse && on) {
-            AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is already in use", Name());
-            return False;
-        }
-        inputBoardInUse  = on;
-        outputBoardInUse = on;
-        return True;
+  /** Set board used as output */
+  virtual bool SetOutputBoardInUse(bool on = True) {
+    /* if(moduleType == ATCAIOCMODULE_RECEIVER) { */
+    /*     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is a Receiver", Name()); */
+    /*     return False; */
+    /* } */
+    if(outputBoardInUse && on) {
+      AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::SetOutputBoardInUse: Board %s is already in use", Name());
+      return False;
     }
+    inputBoardInUse  = on;
+    outputBoardInUse = on;
+    return True;
+  }
 
-///////////////////////////////////////////////////////////////////////////////
-//                           From Time Module                                //
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  //                           From Time Module                                //
+  ///////////////////////////////////////////////////////////////////////////////
 
-public:
+ public:
 
-    // Get the Time
-    int64  GetUsecTime();
+  // Get the Time
+  int64  GetUsecTime();
 
-///////////////////////////////////////////////////////////////////////////////
-//                                  General                                  //
-///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  //                                  General                                  //
+  ///////////////////////////////////////////////////////////////////////////////
 
-    // Serve webpage
-    bool   ProcessHttpMessage(HttpStream &hStream);
+  // Serve webpage
+  bool   ProcessHttpMessage(HttpStream &hStream);
 
-    // Called at pulse start
-    /*bool PulseStart() {*/
-    /*To be filled in*/
-    /*return True;*/
-    /*}*/
+  // Called at pulse start  when state-machine goes to "PRE"
+  bool PulseStart();
+
 };
-
 #endif
