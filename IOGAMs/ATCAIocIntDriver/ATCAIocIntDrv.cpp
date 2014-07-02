@@ -29,23 +29,8 @@
 #include "Endianity.h"
 #include "CDBExtended.h"
 #include "FastPollingMutexSem.h"
-//#include "atca-ioc-int-lib.h"
-//#include "atca-ioc-int.h"
-//#include "atca-ioc-int-ioctl.h"
-
 
 //#define _FAKE_DEV
-
-//#define NCHANNELS 32
-
-
-//#define SAMP_PER_PACKET (DMA_SIZE/NCHANNELS/sizeof(int32_t)) // 2048
-
-//#define DMA_SIZE 128 // (DMA_MAX_BYTES/16/2/32) //  32 ok
-
-//int init_device(int fd);
-//int stop_device(int fd);
-
 
 struct PacketStruct{
   unsigned int channelData[30];  // values from last packet receive, channels 0-14, time on channel 15
@@ -72,7 +57,7 @@ bool ATCAIocIntDrv::EnableAcquisition(){
 
 #ifndef _FAKE_DEV
   if(board.dev_open(deviceFileName.Buffer())){
-    AssertErrorCondition(Information,"ATCAIocIntDrv::EnableAcquisition: %s: Successfully open dev node %s", Name(), deviceFileName.Buffer());
+    AssertErrorCondition(Information, "ATCAIocIntDrv::EnableAcquisition: %s: Successfully open dev node %s", Name(), deviceFileName.Buffer());
 
   }
   else {
@@ -80,16 +65,10 @@ bool ATCAIocIntDrv::EnableAcquisition(){
     return False;
   }
 
-    /*
-  devFd = open(deviceFileName.Buffer(), O_RDWR);
-  if(devFd < 1){
-    AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::EnableAcquisition: %s: Could not open device node: %s",Name(), deviceFileName.Buffer());
-    return False;
-  }
-  init_device(devFd);
-    */
-  board.init_device();
+  board.init_device(chopPeriod, chopDutyCycle, adc_offset_vector, int_offset_vector, numberOfAnalogueInputChannels );
+
 #else
+  board.dev_open(("/dev/null");
   //  devFd = open("/dev/null", O_RDWR);
 #endif
 
@@ -135,7 +114,9 @@ bool  ATCAIocIntDrv::Init(){
   numberOfAnalogueOutputChannels          = 0;
   numberOfDigitalOutputChannels           = 0;
   softwareTrigger                         = 0;
-  //moduleType                          = ATCAIOCMODULE_UNDEFINED;
+  chopPeriod                              = 0;
+  chopDutyCycle                           = 0;   
+
   mux.Create();
 
   // Init receiver parameters
@@ -197,7 +178,7 @@ ATCAIocIntDrv::~ATCAIocIntDrv(){
 /**
  * ObjectLoadSetup
  */
-bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface *err){    
+bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info, StreamInterface *err){    
   // Disable previous opened connections
   DisableAcquisition();
   // Parent class Object load setup
@@ -221,12 +202,6 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
   if(!cdb.ReadInt32(cpuMask, "CpuMask", 0xFFFF)){
     AssertErrorCondition(Warning,"ATCAIocIntDrv::ObjectLoadSetup: %s CpuMask was not specified. Using default: %d",Name(),cpuMask);
   }
-
-  // Based on mudule type, init a recv or a send ATCAIOC channel
-  //if(moduleType == ATCAIOCMODULE_RECEIVER){
-  /////////////////////////
-  // Input Module (recv) //
-  /////////////////////////
 
   // Read MaxDataAgeUsec param
   if (!cdb.ReadInt32(maxDataAgeUsec, "MaxDataAgeUsec", 20000)){
@@ -254,16 +229,30 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
       return False;
     }
     adc_offset_vector =  new int[numberOfAnalogueInputChannels];
-   if(!cdb.ReadInt32Array(adc_offset_vector, (int *)(& numberOfAnalogueInputChannels), 1, "AdcOffsets"))
+    if(!cdb.ReadInt32Array(adc_offset_vector, (int *)(& numberOfAnalogueInputChannels), 1, "AdcOffsets"))
       {
 	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s Could not load AdcOffsets vector", this->Name());
 	return False;
       }
     for(int i=0 ; i < numberOfAnalogueInputChannels ; i++)
       printf("adc%d, %d ", i, adc_offset_vector[i] );
+
+    int_offset_vector =  new int[numberOfAnalogueInputChannels];
+   if(!cdb.ReadInt32Array(int_offset_vector, (int *)(& numberOfAnalogueInputChannels), 1, "IntOffsets"))
+      {
+	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s Could not load intOffsets vector", this->Name());
+	return False;
+      }
+    for(int i=0 ; i < numberOfAnalogueInputChannels ; i++)
+      printf("Int%d, %d ", i, int_offset_vector[i] );
+
+    cdb.ReadInt32(chopPeriod,    "ChopPeriod",    2000);
+    cdb.ReadInt32(chopDutyCycle, "ChopDutyCycle", 1000);
+
     cdb.ReadInt32(softwareTrigger, "SoftwareTrigger", 0);
     /// Read the UsecPeriod of the ATCAIocInt packet producer
     cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
+
 
     // Create Data Buffers. Compute total size and allocate storing buffer 
     for(int i=0 ; i < nOfDataBuffers ; i++){
@@ -283,7 +272,7 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
   keepRunning = False;
   FString threadName = Name();
   threadName += "ATCAIocIntHandler";
-  //  if(moduleType == ATCAIOCMODULE_RECEIVER) {
+
   threadID = Threads::BeginThread((ThreadFunctionType)ReceiverCallback, (void*)this, THREADS_DEFAULT_STACKSIZE, threadName.Buffer(), XH_NotHandled, cpuMask);
   int counter = 0;
   while((!keepRunning)&&(counter++ < 100)) SleepMsec(1);
@@ -291,7 +280,7 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info,StreamInterface 
     AssertErrorCondition(InitialisationError, "ATCAIocIntDrv::ObjectLoadSetup: ReceiverCallback failed to start");
     return False;
   }
-  //}
+  
 
   // Tell user the initialization phase is done
   AssertErrorCondition(Information,"ATCAIocIntDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s",Name(), deviceFileName.Buffer());

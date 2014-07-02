@@ -82,7 +82,7 @@ int ATCAIocBoard::read_packet(void * dataSource, int packetByteSize){
   //    int _ret = board.read_packet(dataSource, packetByteSize);
   return  ::read(fD, dataSource, packetByteSize);
 }
-int ATCAIocBoard::init_device()
+int ATCAIocBoard::init_device(int chop_period, int chop_dc, int* adc_vector, int * int_vector, int numberOfAdcChannels)
 {
   int  tmp, tmp0, rc,i;
 
@@ -109,21 +109,20 @@ int ATCAIocBoard::init_device()
 
   //Set the Chop's period, in this case is 2000 times the period of the acquisition period.
   //(2000) The Chop's frequency will be 1kHz
-  tmp = 2000;
+  tmp = chop_period;
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_CHOP_MAX_COUNT, &tmp);
-  tmp = 1000;
+  tmp = chop_dc;
   rc = ::ioctl(fD, PCIE_ATCA_IOCS_CHOP_CHANGE_COUNT, &tmp);
 
-  /* Reset ADC offsets
-  for (i=0; i < 64; i++) {
-    tmp = i;
-    rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-    tmp = 0;
-    rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-  }
-*/
   reset_offsets();
-  /* Set 0, 1 ADC offsets*/
+  for(int i = 0 ; i < numberOfAdcChannels ; i++)
+    write_adc_offset(i, adc_vector[i]);
+
+  reset_offsets();
+  for(int i = 0 ; i < numberOfAdcChannels ; i++)
+    write_int_offset(i, int_vector[i]);
+
+  /* Set 0, 1 ADC offsets
   tmp = 0;
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
   tmp = -613;
@@ -132,8 +131,8 @@ int ATCAIocBoard::init_device()
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
   tmp = -244;
   rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-
-  /* Set Integral offsets*/
+  */
+  /* Set Integral offsets
   tmp = 32;
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
   tmp = - 12000 ; //- (65536 *  0.2);
@@ -143,6 +142,7 @@ int ATCAIocBoard::init_device()
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
   tmp = -15000;// //- (65536 *  0.2);
   rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
+*/
 
   rc = ::ioctl(fD, PCIE_ATCA_IOCT_ACQ_ENABLE);  // Arm the FPGA to wait for external trigger
 

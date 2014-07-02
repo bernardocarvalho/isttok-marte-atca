@@ -75,13 +75,20 @@ class ATCAIocIntDrv : public GenericAcqModule {
 
   /*Perform Software Trigger on PRE*/
   int        softwareTrigger;
+  int        chopPeriod;
+  int        chopDutyCycle;
+
+  /*Vector for saving Integrator Offsets*/
+  int32 *  adc_offset_vector;
+
+  int32 *  int_offset_vector;
 
   /** Returns the sum of analogue and digital input channels */
   int32 NumberOfInputChannels(){
     //   return numberOfDigitalInputChannels + numberOfAnalogueInputChannels;
     return  numberOfAnalogueInputChannels;
   }
- 
+
   /** Fast mutex to protect reading and writing buffer */
   FastPollingMutexSem    mux;
 
@@ -91,11 +98,6 @@ class ATCAIocIntDrv : public GenericAcqModule {
   /**   Init all module entries */
   bool                   Init();
 
-
-  ///////////////////////////////////////////////////////////////////////////////
-  //                           Receiver Type Module                            //
-  ///////////////////////////////////////////////////////////////////////////////
- private:
 
   /** Triple buffer for receiver type module */
   uint32                 *dataBuffer[nOfDataBuffers];
@@ -133,7 +135,7 @@ class ATCAIocIntDrv : public GenericAcqModule {
   /** CPU mask of the receiver thread (in case it's a receiver module) */
   int32                  cpuMask;
 
-  int32 *  adc_offset_vector;
+
 
   /** Enable the System Acquisition */
   bool EnableAcquisition();
