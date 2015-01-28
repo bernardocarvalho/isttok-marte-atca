@@ -1,0 +1,18 @@
+#*******************************************************************************
+#
+#      $Log: Makefile.rtai,v $
+#      Revision 1.2  2008/08/01 14:10:09  rvitelli
+#      *** empty log message ***
+#
+#      Revision 1.1  2008/06/05 13:18:58  rvitelli
+#      Skeleton of Drv files and makefiles
+#
+#
+#*******************************************************************************/
+
+TARGET=rtai
+
+OBJSRTAI=ATCAadcDrv.x driver_test.x
+
+include Makefile.inc
+

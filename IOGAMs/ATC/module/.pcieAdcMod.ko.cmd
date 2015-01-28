@@ -1,0 +1,1 @@
+cmd_/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.2.0-4-common-rt/scripts/module-common.lds --build-id  -o /home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod.ko /home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod.o /home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod.mod.o

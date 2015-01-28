@@ -1,0 +1,6 @@
+LIBRARY    ATCAadcDrv
+DESCRIPTION "ATCAadcDrv"
+EXPORTS
+
+Get_private_ATCAadcDrvInfo @1
+
