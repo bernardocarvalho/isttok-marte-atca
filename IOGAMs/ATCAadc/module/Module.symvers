@@ -1,5 +1,5 @@
-0x4f0e6ea1	WriteToDAC	/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod	EXPORT_SYMBOL
 0xaa559887	WriteToDIO	/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod	EXPORT_SYMBOL
+0x4f0e6ea1	WriteToDAC	/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod	EXPORT_SYMBOL
 0x12ddac36	GetBufferAddress	/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod	EXPORT_SYMBOL
 0x77ec9821	GetNumberOfInputAnalogChannels	/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod	EXPORT_SYMBOL
 0x337be79e	GetNumberOfInputDigitalChannels	/home/codac-dev/MARTe_2/MARTe/IOGAMS/ATCAadc/module/pcieAdcMod	EXPORT_SYMBOL
