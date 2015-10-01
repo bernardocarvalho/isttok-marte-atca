@@ -25,7 +25,7 @@
 #if !defined (_ATCAIOC_BRD)
 #define _ATCAIOC_BRD
 
-#define DMA_SIZE 128
+#define DMA_INT_SIZE 128
 
 //OBJECT_DLL(ATCAIocBoard)
 class ATCAIocBoard {
@@ -50,7 +50,7 @@ class ATCAIocBoard {
   int write_adc_offset(int chan, int val);
   int write_int_offset(int chan, int val);
   bool dev_open(const char * fileName);
-  int init_device(int chop_period, int chop_dc, int * adc_vector, int * int_vector, int numberOfAdcChannels);
+  int init_device(int chop_period, int chop_dc, int decimate, int * adc_vector, int * int_vector, int numberOfAdcChannels);
   int stop_device();
   bool soft_trigger();
   void dev_close();

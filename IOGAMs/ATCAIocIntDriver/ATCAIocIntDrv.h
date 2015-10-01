@@ -32,9 +32,18 @@
 
 /* ATCAIOC Module type constants */
 /* Number buffers for data storage */
-static const int nOfDataBuffers = 3;
+static const int nOfDataBuffers = 4;
 /**   Input/Output Buffer Size in Byte */
-static const int packetByteSize = 128;
+static const int packetByteSize = DMA_INT_SIZE;
+
+struct PacketStruct{
+  unsigned int channelRawData[16];  // raw ADC values from last packet receive, channels 0-15
+  float channelIntegData[14];       // Integ values from last packet receive, channels 0-14
+  unsigned int nSampleNumber;       // the sample number since the last t=0
+  unsigned int nSampleTime;         // the time since t=0, going to PRE as microseconds 
+  //  unsigned int dummyData[14];    // values from first packet -- to discard
+  //unsigned int channelData[16];  // values from last packet receive, channels 0-14, time on channel 15
+};
 
 OBJECT_DLL(ATCAIocIntDrv)
 
@@ -77,11 +86,12 @@ class ATCAIocIntDrv : public GenericAcqModule {
   int        softwareTrigger;
   int        chopPeriod;
   int        chopDutyCycle;
-
+  int        decimateFactor;
   /*Vector for saving Integrator Offsets*/
   int32 *  adc_offset_vector;
 
-  int32 *  int_offset_vector;
+  int32 *  int_offset_Ivector;
+  float *  int_offset_Fvector;
 
   /** Returns the sum of analogue and digital input channels */
   int32 NumberOfInputChannels(){

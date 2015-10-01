@@ -32,13 +32,6 @@
 
 //#define _FAKE_DEV
 
-struct PacketStruct{
-  unsigned int channelData[30];  // values from last packet receive, channels 0-14, time on channel 15
-  unsigned int nSampleNumber;    // the sample number since the last t=0
-  unsigned int nSampleTime;      // the time since t=0, going to PRE as microseconds 
-  //  unsigned int dummyData[14];    // values from first packet -- to discard
-  //unsigned int channelData[16];  // values from last packet receive, channels 0-14, time on channel 15
-};
 
 // Timing ATCAIocInt module
 static const int32 timingATCAIocIntDrv = 400;
@@ -65,7 +58,7 @@ bool ATCAIocIntDrv::EnableAcquisition(){
     return False;
   }
 
-  board.init_device(chopPeriod, chopDutyCycle, adc_offset_vector, int_offset_vector, numberOfAnalogueInputChannels );
+  board.init_device(chopPeriod, chopDutyCycle, decimateFactor, adc_offset_vector, int_offset_Ivector, numberOfAnalogueInputChannels );
 
 #else
   board.dev_open(("/dev/null");
@@ -116,7 +109,7 @@ bool  ATCAIocIntDrv::Init(){
   softwareTrigger                         = 0;
   chopPeriod                              = 0;
   chopDutyCycle                           = 0;   
-
+  decimateFactor                          = 0;
   mux.Create();
 
   // Init receiver parameters
@@ -237,22 +230,25 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info, StreamInterface
     for(int i=0 ; i < numberOfAnalogueInputChannels ; i++)
       printf("adc%d, %d ", i, adc_offset_vector[i] );
 
-    int_offset_vector =  new int[numberOfAnalogueInputChannels];
-   if(!cdb.ReadInt32Array(int_offset_vector, (int *)(& numberOfAnalogueInputChannels), 1, "IntOffsets"))
+    int_offset_Fvector =  new float[numberOfAnalogueInputChannels];
+    int_offset_Ivector =  new int[numberOfAnalogueInputChannels];
+   if(!cdb.ReadFloatArray(int_offset_Fvector, (int *)(& numberOfAnalogueInputChannels), 1, "IntOffsets"))
       {
 	AssertErrorCondition(InitialisationError,"ATCAIocIntDrv::ObjectLoadSetup: %s Could not load intOffsets vector", this->Name());
 	return False;
       }
-    for(int i=0 ; i < numberOfAnalogueInputChannels ; i++)
-      printf("Int%d, %d ", i, int_offset_vector[i] );
-
+   for(int i=0 ; i < numberOfAnalogueInputChannels; i++){
+      int_offset_Ivector[i] = round(int_offset_Fvector[i] * 65536.0); // multiply by 2**16
+      printf("Int%d, %f ,", i, int_offset_Fvector[i] );
+   }
     cdb.ReadInt32(chopPeriod,    "ChopPeriod",    2000);
     cdb.ReadInt32(chopDutyCycle, "ChopDutyCycle", 1000);
+
+    cdb.ReadInt32(decimateFactor, "DecimateFactor", 200);
 
     cdb.ReadInt32(softwareTrigger, "SoftwareTrigger", 0);
     /// Read the UsecPeriod of the ATCAIocInt packet producer
     cdb.ReadInt32(producerUsecPeriod, "ProducerUsecPeriod", -1);
-
 
     // Create Data Buffers. Compute total size and allocate storing buffer 
     for(int i=0 ; i < nOfDataBuffers ; i++){
@@ -281,7 +277,6 @@ bool ATCAIocIntDrv::ObjectLoadSetup(ConfigurationDataBase &info, StreamInterface
     return False;
   }
   
-
   // Tell user the initialization phase is done
   AssertErrorCondition(Information,"ATCAIocIntDrv::ObjectLoadSetup:: ATCAIOC Module %s Correctly Initialized - DEVI --> %s",Name(), deviceFileName.Buffer());
 
@@ -321,10 +316,13 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // Check data age
   uint32 sampleNo = pkt->nSampleNumber;
   if(freshPacket) {
-    if(abs(usecTime - pkt->nSampleTime) > maxDataAgeUsec) {
-      // Packet too old
+    if(sampleNo < 100){
+      printf("old:%u:%u:%f  ", usecTime , pkt->nSampleNumber, pkt->channelIntegData[0] ); //  
+    }
+    if(abs(usecTime -  pkt->nSampleNumber*100) > maxDataAgeUsec) { //pkt->nSampleTime
+       // Packet too old
       // return the last received data and put 0xFFFFFFFF as nSampleNumber
-      //      printf("old:%u:%u  ", usecTime , pkt->nSampleTime );
+      printf("old:%u:%u:%d  ", usecTime, pkt->nSampleNumber*100, maxDataAgeUsec);//pkt->channelIntegData[0] ); //  
       sampleNo = 0xFFFFFFFF;
       previousPacketTooOldErrorCounter++;
       freshPacket = False;
@@ -340,12 +338,18 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   // Copy the data from the internal buffer to
   // the one passed in GetData
   uint32 *destination = (uint32 *)buffer;
-  uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
+  //  uint32 *destinationEnd = (uint32 *)(buffer + packetByteSize/sizeof(int32));
   //  uint32 *destinationEnd = (uint32 *)(buffer + numberOfInputChannels);
-  uint32 *source = lastReadBuffer;
-  while(destination < destinationEnd) {
-    *destination++ = *source++;
-  }
+  // uint32 *source = lastReadBuffer;
+  //while(destination < destinationEnd) {
+  //  *destination++ = *source++;
+  // }
+
+  *destination++ =  pkt->nSampleNumber;
+  *destination++ =  pkt->nSampleTime;
+
+  memcpy(destination, &pkt->channelIntegData[0], numberOfAnalogueInputChannels * sizeof(float));
+
   //  destination[0] = pkt->nSampleNumber;// *source++;
   //destination[1] = pkt->nSampleTime;// *source++;
 
@@ -353,8 +357,8 @@ int32 ATCAIocIntDrv::GetData(uint32 usecTime, int32 *buffer, int32 bufferNumber)
   //destination[i]  = pkt->channelData[i-2];   //  dataBuffer[i] = NULL;
   //}
 
-  PacketStruct *p = (PacketStruct *)buffer;
-  p->nSampleNumber = sampleNo;
+  //  PacketStruct *p = (PacketStruct *)buffer;
+  //p->nSampleNumber = sampleNo;
   return 1;
 }
 
@@ -436,15 +440,6 @@ bool ATCAIocIntDrv::PulseStart() {
   //rc = 
   if(softwareTrigger!=0){
     board.soft_trigger();
-    /*
-;
-    if(ioctl(devFd, PCIE_ATCA_IOCT_SOFT_TRIG)>0){ // reset time counter on board
-      usleep(10);
-      return True;
-    }
-    else
-	return False;
-    */
   }
   return True;
 }

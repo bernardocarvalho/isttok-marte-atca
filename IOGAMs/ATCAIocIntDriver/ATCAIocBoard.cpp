@@ -82,7 +82,7 @@ int ATCAIocBoard::read_packet(void * dataSource, int packetByteSize){
   //    int _ret = board.read_packet(dataSource, packetByteSize);
   return  ::read(fD, dataSource, packetByteSize);
 }
-int ATCAIocBoard::init_device(int chop_period, int chop_dc, int* adc_vector, int * int_vector, int numberOfAdcChannels)
+int ATCAIocBoard::init_device(int chop_period, int chop_dc, int decimate,  int* adc_vector, int * int_vector, int numberOfAdcChannels)
 {
   int  tmp, tmp0, rc,i;
 
@@ -100,9 +100,9 @@ int ATCAIocBoard::init_device(int chop_period, int chop_dc, int* adc_vector, int
   //The signal is  to be reconstruted inside the FPGA 
   rc = ::ioctl(fD, PCIE_ATCA_IOCT_CHOP_RECONSTRUCT_ON);
 
-  tmp = DMA_SIZE;
+  tmp = DMA_INT_SIZE;
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_DMA_SIZE, &tmp);
-  tmp = DMA_SIZE;
+  tmp = DMA_INT_SIZE;
   rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_DMA_THRES, &tmp);
 
   rc = ::ioctl(fD, PCIE_ATCA_IOCT_INTEGRAL_CALC_ON);
@@ -114,6 +114,9 @@ int ATCAIocBoard::init_device(int chop_period, int chop_dc, int* adc_vector, int
   tmp = chop_dc;
   rc = ::ioctl(fD, PCIE_ATCA_IOCS_CHOP_CHANGE_COUNT, &tmp);
 
+  tmp = decimate;
+  rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_INTEGRAL_DECIM, &tmp);
+
   reset_offsets();
   for(int i = 0 ; i < numberOfAdcChannels ; i++)
     write_adc_offset(i, adc_vector[i]);
@@ -122,27 +125,6 @@ int ATCAIocBoard::init_device(int chop_period, int chop_dc, int* adc_vector, int
   for(int i = 0 ; i < numberOfAdcChannels ; i++)
     write_int_offset(i, int_vector[i]);
 
-  /* Set 0, 1 ADC offsets
-  tmp = 0;
-  rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = -613;
-  rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-  tmp = 1;
-  rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = -244;
-  rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-  */
-  /* Set Integral offsets
-  tmp = 32;
-  rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = - 12000 ; //- (65536 *  0.2);
-  rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-
-  tmp = 33;
-  rc  =  ::ioctl(fD, PCIE_ATCA_IOCS_REG_OFF, &tmp);
-  tmp = -15000;// //- (65536 *  0.2);
-  rc = ::ioctl(fD, PCIE_ATCA_IOCS_REG_DATA, &tmp);
-*/
 
   rc = ::ioctl(fD, PCIE_ATCA_IOCT_ACQ_ENABLE);  // Arm the FPGA to wait for external trigger
 
