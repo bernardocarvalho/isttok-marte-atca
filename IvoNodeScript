@@ -1,0 +1,23 @@
+#!/bin/sh
+clear
+echo "STARTING MARTe NODE"
+NODE_DIR=/home/ipfnist/MARTeNode
+cd $NODE_DIR
+#rm -f SCAD_NODE_*
+XML_NODE_FILE_LOCATION="$NODE_DIR/MARTeNode.xml"
+NAME_SERVICE_LOCATION="corbaloc:iiop:1.2@baco.ipfn.ist.utl.pt:1050/NameService" 
+CS_NAME="CentralServerRegister"
+HW_PERSIST_DIR="$NODE_DIR/persist"
+#MARTE_CONFIG_FILE="/home/ipfnist/code/JET_Control/MARTe/TestArea/isttok-tomo.cfg"
+#MARTE_CONFIG_FILE="/home/ipfnist/code/JET_ControlFROMCVS/MARTe/TestArea/isttok-oper.cfg"
+MARTE_CONFIG_FILE="/home/ivoc/code/sandbox/last.cfg"
+#MARTE_CONFIG_FILE="/home/ipfnist/code/JET_ControlFROMCVS/MARTe/TestArea/tomo-pre-square.cfg"
+#MARTE_CONFIG_FILE="/home/ipfnist/code/ISTTOK_Control/MARTe/GAMs/mag_Control_GAM/isttok-magnetic.cfg"
+MARTE_SERVER="http://192.168.1.175:8084/"
+DATA_COLLECTION_GAM_LIST="DataCollection"
+
+NODE_ARGS="$NAME_SERVICE_LOCATION $CS_NAME $XML_NODE_FILE_LOCATION $HW_PERSIST_DIR $MARTE_CONFIG_FILE $MARTE_SERVER $DATA_COLLECTION_GAM_LIST"
+CLASSPATH="$CLASSPATH:.:lib/FireSignal.jar:lib/commons-codec-1.3.jar:lib/commons-httpclient-3.1.jar:lib/commons-logging-1.1.1.jar"
+SYS_PROPS="-Djava.util.logging.config.file=loggers.config.properties -Xms64m -Xmx512m -Dcom.sun.CORBA.ORBDynamicStubFactoryFactoryClass=com.sun.corba.se.impl.presentation.rmi.StubFactoryFactoryStaticImpl"
+java -cp $CLASSPATH $SYS_PROPS -jar ControlMARTeNode.jar $NODE_ARGS &
+#echo $!> /var/lock/scad_central_node
