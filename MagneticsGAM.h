@@ -18,18 +18,18 @@ private:
 	DDBOutputInterface *SignalsOutputInterface;
 
 	struct InputInterfaceStruct {
-		float ADC_magnetic_0;
-		float ADC_magnetic_1;
-		float ADC_magnetic_2;
-		float ADC_magnetic_3;
-		float ADC_magnetic_4;
-		float ADC_magnetic_5;
-		float ADC_magnetic_6;
-		float ADC_magnetic_7;
-		float ADC_magnetic_8;
-		float ADC_magnetic_9;
-		float ADC_magnetic_10;
-		float ADC_magnetic_11;
+		int ADC_magnetic_0;
+		int ADC_magnetic_1;
+		int ADC_magnetic_2;
+		int ADC_magnetic_3;
+		int ADC_magnetic_4;
+		int ADC_magnetic_5;
+		int ADC_magnetic_6;
+		int ADC_magnetic_7;
+		int ADC_magnetic_8;
+		int ADC_magnetic_9;
+		int ADC_magnetic_10;
+		int ADC_magnetic_11;
 		int usectime;
 	};
 	struct OutputInterfaceStruct {
@@ -41,18 +41,23 @@ private:
 	int usectime_to_wait_for_starting_operation;
 	bool magnetic_radial_bool;
 	bool magnetic_vertical_bool;
+	bool magnetic_module_correction_bool;
 	int NumberOfProbes;
 	float *magnetic_Angles;
 	float *magnetic_Calibration;
 	int NumberOfMeasurements;
 	int *ProbeNumbers;
+	int NumberOfModules;
+	float *magnetic_Offset_slope;
+	float *magnetic_Polarity_calibration;
 
 	float *radial_coeficients;
 	float *vertical_coeficients;
-	float *remove_offset;
-	float *accumulator;
+	float *magnetic_Offset_zero;
 	float *ADC_values;
 	float *corrected_probes;
+	
+	float adc18bit_conversion;
 	
 	float *points_x;
 	float *points_y;

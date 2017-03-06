@@ -1,5 +1,6 @@
 
 #include "MagneticsGAM.h"
+#include "math.h"
 
 OBJECTLOADREGISTER(MagneticsGAM, "$Id: $")
 
@@ -11,14 +12,11 @@ MagneticsGAM::MagneticsGAM(){
 }
 
 
-
-
 // ********* Destructor ********************************************
 MagneticsGAM::~MagneticsGAM()
 {
 	
 }
-
 
 
 //{ ********* Initialise the module ********************************
@@ -54,6 +52,16 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData){
 		{
 			magnetic_vertical_bool = (bool)i;
 			AssertErrorCondition(Information,"MagneticsGAM::Initialise: magnetic_vertical_bool = %d",magnetic_vertical_bool);
+		}	
+		if(!cdb.ReadInt32(i, "magnetic_module_correction_bool"))
+		{
+			AssertErrorCondition(InitialisationError,"MagneticsGAM::Initialise: %s magnetic_module_correction_bool",this->Name());
+			return False;
+		}
+		else 
+		{
+			magnetic_module_correction_bool = (bool)i;
+			AssertErrorCondition(Information,"MagneticsGAM::Initialise:  = %d",magnetic_module_correction_bool);
 		}	
 
 
@@ -117,6 +125,51 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData){
 		}
 		else {
 			AssertErrorCondition(InitialisationError,"MagneticsGAM::Initialise: %s NumberOfMeasurements lower than 1",this->Name());
+			return False;
+		}
+
+	cdb->MoveToFather();
+	
+//Added for module offset correction
+	if(!cdb->Move("ModuleOffsetCorrectionLSBusec"))
+	{
+		AssertErrorCondition(InitialisationError,"MagneticsGAM::Initialise: %s Could not move to \"+MARTe.+ISTTOK_RTTh.+magnetic_probes.ModuleOffsetCorrectionLSBusec\"",this->Name());
+		return False;
+	}
+		if(!cdb.ReadInt32(NumberOfModules, "NumberOfModules"))
+		{
+			AssertErrorCondition(InitialisationError,"MagneticsGAM::Initialise: %s NumberOfModules",this->Name());
+			return False;
+		}
+		else	AssertErrorCondition(Information,"MagneticsGAM::Initialise: NumberOfModules = %d",NumberOfMeasurements);
+
+		if (NumberOfModules > 0){
+			magnetic_Offset_slope =new float[NumberOfModules];
+
+			if(!cdb.ReadFloatArray(magnetic_Offset_slope, (int *)(&NumberOfModules), 1, "OffsetCalibration"))
+			{
+				AssertErrorCondition(InitialisationError,"ReadWaveformFiles: Could not OffsetCalibration");
+				return False;
+			}
+			else for(i=0;i<NumberOfModules;i++) AssertErrorCondition(Information,"MagneticsGAM::Initialise: magnetic_Offset_slope[%d] = %f",i, magnetic_Offset_slope[i]);
+		}
+		else {
+			AssertErrorCondition(InitialisationError,"MagneticsGAM::Initialise: %s NumberOfModules lower than 1",this->Name());
+			return False;
+		}
+
+		if (NumberOfModules > 0){
+			magnetic_Polarity_calibration =new float[NumberOfModules];
+
+			if(!cdb.ReadFloatArray(magnetic_Polarity_calibration, (int *)(&NumberOfModules), 1, "PolarityCalibration"))
+			{
+				AssertErrorCondition(InitialisationError,"ReadWaveformFiles: Could not read PolarityCalibration");
+				return False;
+			}
+			else for(i=0;i<NumberOfModules;i++) AssertErrorCondition(Information,"MagneticsGAM::Initialise: magnetic_Polarity_calibration[%d] = %f",i, magnetic_Polarity_calibration[i]);
+		}
+		else {
+			AssertErrorCondition(InitialisationError,"MagneticsGAM::Initialise: %s NumberOfModules lower than 1",this->Name());
 			return False;
 		}
 
@@ -220,17 +273,24 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData){
 
 	cdb->MoveToFather();
 
-	// Initialise the accumulators
+// Initialise the accumulators
 	this->ADC_values = new float[this->NumberOfProbes];
 	this->corrected_probes = new float[this->NumberOfMeasurements];
-	this->accumulator = new float[this->NumberOfMeasurements];
-	this->remove_offset = new float[this->NumberOfMeasurements];
-	for(i = 0 ; i < this->NumberOfMeasurements ; i++){
-		this->accumulator[i] = 0.0;
-		this->remove_offset[i] = 0.0;
-	} 
+	this->magnetic_Offset_zero = new float[this->NumberOfModules];
+	for(i = 0 ; i < this->NumberOfProbes ; i++){
+		this->ADC_values[i] = 0.0;
+		this->corrected_probes[i] = 0.0;
+		this->magnetic_Offset_zero[i] = 0.0;
+	}
+	magnetic_field_sum = 0.0;
 
-	// Initialise the auxiliary probe position values
+//ACHTUNG ACHTUNG!!! 0.1 if 100us and 0.01 if 1000us
+// Correct Offsets factor - values Bits/ms -> bits/100us
+	for(i = 0 ; i < this->NumberOfMeasurements ; i++){
+		this->magnetic_Offset_slope[i] = this->magnetic_Offset_slope[i]*0.1;
+	}
+
+// Initialise the auxiliary probe position values
 	this->n_samples = 0;
 	this->major_radius = 0.46;
 	this->probe_radius = 0.0935;
@@ -240,10 +300,8 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData){
 	this->vertical_coeficients = new float[this->NumberOfProbes];
 	for(i = 0 ; i < this->NumberOfProbes ; i++){
 		
-//		this->radial_coeficients[i] = this->major_radius + this->probe_radius * cos(this->magnetic_Angles[i] * M_PI / 180);
-		this->radial_coeficients[i] = this->probe_radius * cos(this->magnetic_Angles[i] * M_PI / 180);
-		this->vertical_coeficients[i] = this->probe_radius * sin(this->magnetic_Angles[i] * M_PI / 180);
-		//AssertErrorCondition(InitialisationError,"MagneticsGAM:: probe number = %d position x = %f, y = %f",i,this->radial_coeficients[i],this->vertical_coeficients[i]);
+	this->radial_coeficients[i] = this->probe_radius * cos(this->magnetic_Angles[i] * M_PI / 180);
+	this->vertical_coeficients[i] = this->probe_radius * sin(this->magnetic_Angles[i] * M_PI / 180);
 	}
 	
 	if(NumberOfMeasurements == NumberOfProbes){
@@ -256,56 +314,14 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData){
 		for(i = 0 ; i < this->NumberOfProbes  ; i++){
 			m_x[i] = this->radial_coeficients[i] / this->probe_radius;
 			m_y[i] = this->vertical_coeficients[i] / this->probe_radius;
-		}
-		
-		
+		}		
 	}
+	
 	this->plasma_current_convertion_factor = 4300 * 2.0 * M_PI * this->probe_radius / this->NumberOfMeasurements;
-/*
-	float *teste;
-	teste = new float[NumberOfProbes];
-	teste[0] = 1;
-	teste[1] = 1;
-	teste[2] = 1.2;
-	teste[3] = 1.2;
-	teste[4] = 1;
-	teste[5] = 1;
-	teste[6] = 1;
-	teste[7] = 1;
-	teste[8] = 0.8;
-	teste[9] = 0.8;
-	teste[10] = 1;
-	teste[11] = 1;
-	
-	
-	for (i = 0 ; i < this->NumberOfProbes/4  ; i++){
-		r_a = this->probe_radius * 2 * teste[int(i+NumberOfProbes/2)] / (teste[int(i+NumberOfProbes/2)] + teste[i]);
-		r_b = this->probe_radius * 2 * teste[int(i+NumberOfProbes/2+NumberOfProbes/4)] / (teste[int(i+NumberOfProbes/2+NumberOfProbes/4)] + teste[int(i+NumberOfProbes/4)]);
-		x_a = this->radial_coeficients[this->ProbeNumbers[i]] - m_x[i] * r_a;
-		x_b = this->radial_coeficients[this->ProbeNumbers[int(i+this->NumberOfProbes/4)]] - m_x[int(i+this->NumberOfProbes/4)] * r_b;
-		y_a = this->vertical_coeficients[this->ProbeNumbers[i]] - m_y[i] * r_a;
-		y_b = this->vertical_coeficients[this->ProbeNumbers[int(i+this->NumberOfProbes/4)]] - m_y[int(i+this->NumberOfProbes/4)] * r_b;
-	
-		AssertErrorCondition(InitialisationError,"MagneticsGAM:: i = %d r_a = %f, r_b = %f, x_a = %f, y_a = %f, x_b = %f, y_b = %f",i,r_a,r_b,x_a,y_a,x_b,y_b);
-		
-//					if (m_x[i] != 0 && m_x[int(i+NumberOfProbes/4)] != 0) { 
-			m_b = m_y[i]/m_x[i];
-			m_a = m_y[int(i+this->NumberOfProbes/4)]/m_x[int(i+this->NumberOfProbes/4)];
-			points_x[i] = (m_b*x_b-y_b-m_a*x_a+y_a) / (m_b-m_a);
-			points_y[i] = m_a*(points_x[i]-x_a)+y_a;
-//					}
-		radial_position += points_x[i];
-		vertical_position += points_y[i];
-	}
-		AssertErrorCondition(InitialisationError,"MagneticsGAM:: position x = %f, y = %f",this->radial_position,this->vertical_position);
-*/
-
-	
 	
 	return True;
 }
 //} ******************************************************************
-
 
 
 //{ ********* Execute the module functionalities *******************
@@ -313,64 +329,74 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber){
 
 	InputInterfaceStruct *inputstruct = (InputInterfaceStruct *) this->SignalsInputInterface->Buffer();
 	this->SignalsInputInterface->Read();
-//	AssertErrorCondition(InitialisationError,"MagneticsGAM:: %s inputstruct = %f %f %f %f %f %f %f %f %f %f %f %f %d",this->Name(), inputstruct[0].ADC_magnetic_0 , inputstruct[0].ADC_magnetic_1 , inputstruct[0].ADC_magnetic_2 , inputstruct[0].ADC_magnetic_3 , inputstruct[0].ADC_magnetic_4 , inputstruct[0].ADC_magnetic_5 , inputstruct[0].ADC_magnetic_6 , inputstruct[0].ADC_magnetic_7 , inputstruct[0].ADC_magnetic_8 , inputstruct[0].ADC_magnetic_9 , inputstruct[0].ADC_magnetic_10 , inputstruct[0].ADC_magnetic_11, inputstruct[0].usectime );
 	OutputInterfaceStruct *outputstruct = (OutputInterfaceStruct *) this->SignalsOutputInterface->Buffer();
 	
 	int i;
 	
-	this->ADC_values[0] = inputstruct[0].ADC_magnetic_0;
-	this->ADC_values[1] = inputstruct[0].ADC_magnetic_1;
-	this->ADC_values[2] = inputstruct[0].ADC_magnetic_2;
-	this->ADC_values[3] = inputstruct[0].ADC_magnetic_3;
-	this->ADC_values[4] = inputstruct[0].ADC_magnetic_4;
-	this->ADC_values[5] = inputstruct[0].ADC_magnetic_5;
-	this->ADC_values[6] = inputstruct[0].ADC_magnetic_6;
-	this->ADC_values[7] = inputstruct[0].ADC_magnetic_7;
-	this->ADC_values[8] = inputstruct[0].ADC_magnetic_8;
-	this->ADC_values[9] = inputstruct[0].ADC_magnetic_9;
-	this->ADC_values[10] = inputstruct[0].ADC_magnetic_10;
-	this->ADC_values[11] = inputstruct[0].ADC_magnetic_11;
+	ADC_values[0] = (float)inputstruct[0].ADC_magnetic_0;
+	ADC_values[1] = (float)inputstruct[0].ADC_magnetic_1;
+	ADC_values[2] = (float)inputstruct[0].ADC_magnetic_2;
+	ADC_values[3] = (float)inputstruct[0].ADC_magnetic_3;
+	ADC_values[4] = (float)inputstruct[0].ADC_magnetic_4;
+	ADC_values[5] = (float)inputstruct[0].ADC_magnetic_5;
+	ADC_values[6] = (float)inputstruct[0].ADC_magnetic_6;
+	ADC_values[7] = (float)inputstruct[0].ADC_magnetic_7;
+	ADC_values[8] = (float)inputstruct[0].ADC_magnetic_8;
+	ADC_values[9] = (float)inputstruct[0].ADC_magnetic_9;
+	ADC_values[10] = (float)inputstruct[0].ADC_magnetic_10;
+	ADC_values[11] = (float)inputstruct[0].ADC_magnetic_11;
+
 	
-	
+	//Apply coil polarity factor - OK
+	for(i = 0 ; i < this->NumberOfMeasurements ; i++){
+		ADC_values[i] = ADC_values[i]*magnetic_Polarity_calibration[i];
+	}
+		
 	if(functionNumber == GAMOnline){
-		// Determine the ADC offset
+		// Determine the ADC Module offset "b" as "y(n)=a*n+b"
+		
 		if(inputstruct[0].usectime > 0 && inputstruct[0].usectime < usectime_to_wait_for_starting_operation){
-			n_samples++;
 			
-			for(i = 0 ; i < this->NumberOfMeasurements ; i++){
-				
-				this->accumulator[i] += ADC_values[ProbeNumbers[i]];
-				this->remove_offset[i] = this->accumulator [i] / (float) this->n_samples;
-			}
+			//For now we do not use this step (under optimization)
+					
+			//Determine "b" by knowing "a" and "y(-100us)"
+			//if(inputstruct[0].usectime==900){
+			//	for(i = 0 ; i < this->NumberOfMeasurements ; i++){
+			//		this->magnetic_Offset_zero[i] = ADC_values[i] + this->magnetic_Offset_slope[i]; // b = y(-100us) - a*(-100us) = y(10) + a*(1)
+			//	}				
+			//}			
 
 			outputstruct[0].MagneticProbesR = 0.;
 			outputstruct[0].MagneticProbesZ = 0.;
 			outputstruct[0].MagneticProbesPlasmaCurrent = 0.;
 		}
 		else{
-			//send offset corrections to logger once
-			if (this->n_samples >0 ){
-
-				for(i = 0 ; i < this->NumberOfMeasurements ; i++) AssertErrorCondition(Information,"MagneticsGAM::Execute: %s OFFSETS %d = %f, number of samples = %d", this->Name(), i, this->remove_offset[i], n_samples);
-				n_samples = 0;
+			
+			//Take offset at t=0
+			if(inputstruct[0].usectime==usectime_to_wait_for_starting_operation){
+				for(i = 0 ; i < this->NumberOfMeasurements ; i++){
+					this->magnetic_Offset_zero[i] = ADC_values[i];
+					magnetic_field_sum = 0.0;
+				}
 			}
 			
+			//Correct using ADC[n]-(m*x+b)
 			for(i = 0 ; i < this->NumberOfMeasurements ; i++){
-				corrected_probes[i] = ADC_values[ProbeNumbers[i]] - remove_offset[i];
+				corrected_probes[i] = ADC_values[i] - ( this->magnetic_Offset_slope[i]*((inputstruct[0].usectime - usectime_to_wait_for_starting_operation)/100) + this->magnetic_Offset_zero[i]);
 			}
-			// Calculate H from ADC values (with integral correction)
-//			for(int i = 0 ; i < this->NumberOfMeasurements ; i++)
-//				Hp[i] = ((float) adcValues[ProbeNumbers[this->i]] - adcOffset[ProbeNumbers[this->i]] + this->integral_correction_constant * (this->adcAccumulator[this->ProbeNumbers[i]] - (float) this->n_samples * adcOffset[this->ProbeNumbers[i]])) * this->magnetic_Calibration[this->ProbeNumbers[i]];
 
 			// Calculate Ip
-			magnetic_field_sum = 0.0;
-			for(i = 0 ; i < this->NumberOfMeasurements ; i++) magnetic_field_sum += corrected_probes[i];
-			
-			outputstruct[0].MagneticProbesPlasmaCurrent = magnetic_field_sum * this->plasma_current_convertion_factor;
+			magnetic_field_sum = 0.0;  //this->NumberOfMeasurements
+			for(i = 0 ; i < this->NumberOfMeasurements ; i++){
+				magnetic_field_sum = corrected_probes[i];
+			}
+					
+			outputstruct[0].MagneticProbesPlasmaCurrent = magnetic_field_sum;//corrected_probes[11]; //magnetic_field_sum * this->plasma_current_convertion_factor;
 
 			// Estimate radial_position and vertical_position
 			radial_position = 0.0;
 			vertical_position = 0.0;
+			/*
 			if(NumberOfMeasurements == NumberOfProbes){
 				// WARNING: this code divides by zero fairly often. Many IGBTs died to bring us this information
 				for (i = 0 ; i < this->NumberOfProbes/4  ; i++){
@@ -413,31 +439,24 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber){
 			
 			if(vertical_position < -this->clip_limit) vertical_position = -this->clip_limit;
 			if(vertical_position > this->clip_limit) vertical_position = this->clip_limit;
-
+			
+			*/
+			
 			outputstruct[0].MagneticProbesR = radial_position;
 			outputstruct[0].MagneticProbesZ = vertical_position;
 
-			// Convert position to mm
-			//	radial_position *= 1000.0;
-			//	vertical_position *= 1000.0;
 		} 
 	}
 	else {
-		this->n_samples = 0;
-		for(i = 0 ; i < (this->NumberOfMeasurements) ; i++){
-			this->accumulator[i] = 0;
-			this->remove_offset[i] = 0;
-		}
+		//this->n_samples = 0;
+		//for(i = 0 ; i < (this->NumberOfMeasurements) ; i++){
+		//	this->magnetic_Offset_zero[i] = 0;
+		//}
 		outputstruct[0].MagneticProbesPlasmaCurrent = 0;
 		outputstruct[0].MagneticProbesR = 0;
 		outputstruct[0].MagneticProbesZ = 0;
 	}
-	
-	
-	
-	
-//	outputstruct[0].MagneticProbesR = (float) inputstruct[0].ADC_magnetic_0;
-//	AssertErrorCondition(InitialisationError,"MagneticsGAM:: %s outputstruct = %f %f %f",this->Name(), outputstruct[0].MagneticProbesR , outputstruct[0].MagneticProbesZ, outputstruct[0].MagneticProbesPlasmaCurrent);
+
 	this->SignalsOutputInterface->Write();
 
 	return True;		
@@ -485,9 +504,11 @@ bool MagneticsGAM::ProcessHttpMessage(HttpStream &hStream){
 		hmStream.SSPrintf(HtmlTagStreamMode, "input type=\"submit\" name=\"submit_hide\" value=\"Hide input variables\"");		
 		hmStream.SSPrintf(HtmlTagStreamMode, "br><br>magnetic_radial_bool = %d\n\
 		<br>magnetic_vertical_bool = %d\n\
+		<br>magnetic_module_correction_bool = %d\n\
 		<br>NumberOfProbes = %d\n\
 		<br>NumberOfMeasurements = %d\n\
-		<br><br",magnetic_radial_bool,magnetic_vertical_bool,NumberOfProbes,NumberOfMeasurements);
+		<br>NumberOfModules = %d\n\
+		<br><br",magnetic_radial_bool,magnetic_vertical_bool,magnetic_module_correction_bool,NumberOfProbes,NumberOfMeasurements,NumberOfModules);
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "table border=\"1\"><tr><td>magnetic_Angles</td");
 		for (i=0;i<NumberOfProbes;i++)hmStream.SSPrintf(HtmlTagStreamMode, "td>%.2f</td",magnetic_Angles[i]);
@@ -497,6 +518,14 @@ bool MagneticsGAM::ProcessHttpMessage(HttpStream &hStream){
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "table border=\"1\"><tr><td>ProbeNumbers</td");
 		for (i=0;i<NumberOfMeasurements;i++)hmStream.SSPrintf(HtmlTagStreamMode, "td>%d</td",ProbeNumbers[i]);
+		hmStream.SSPrintf(HtmlTagStreamMode, "/tr></table><br");
+		
+		hmStream.SSPrintf(HtmlTagStreamMode, "table border=\"1\"><tr><td>magnetic_Offset_slope</td");
+		for (i=0;i<NumberOfModules;i++)hmStream.SSPrintf(HtmlTagStreamMode, "td>%.2f</td",magnetic_Offset_slope[i]);
+		hmStream.SSPrintf(HtmlTagStreamMode, "/tr></table><br");
+		
+		hmStream.SSPrintf(HtmlTagStreamMode, "table border=\"1\"><tr><td>magnetic_Polarity_calibration</td");
+		for (i=0;i<NumberOfModules;i++)hmStream.SSPrintf(HtmlTagStreamMode, "td>%.2f</td",magnetic_Polarity_calibration[i]);
 		hmStream.SSPrintf(HtmlTagStreamMode, "/tr></table><br");
 	}
 	hmStream.SSPrintf(HtmlTagStreamMode, "/form");
