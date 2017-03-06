@@ -189,10 +189,16 @@ bool MachineProtectionGAM::Execute(GAM_FunctionNumbers functionNumber){
 		}
 		else calculated_saturation_value = 0;
 		
-		if ( inputstruct[0].IronCoreSaturation > iron_core_dangerous_value) assert_number_of_samples_in_saturation_1++ ;
+		if ( inputstruct[0].IronCoreSaturation > iron_core_dangerous_value) {
+			assert_number_of_samples_in_saturation_1++ ;  // HALVES
+			// AssertErrorCondition(InitialisationError,"MachineProtectionGAM::Execute: Consecutive Saturated1 cycles %d/6",assert_number_of_samples_in_saturation_1);
+		}
 		else assert_number_of_samples_in_saturation_1 = 0;
 
-		if ( calculated_saturation_value > iron_core_saturation_value) assert_number_of_samples_in_saturation_2++;
+		if ( calculated_saturation_value > iron_core_saturation_value) {
+			assert_number_of_samples_in_saturation_2++;
+			// AssertErrorCondition(InitialisationError,"MachineProtectionGAM::Execute: Consecutive Saturated2 cycles %d/6",assert_number_of_samples_in_saturation_2);
+		}
 		else assert_number_of_samples_in_saturation_2 = 0;
 		
 		if ( assert_number_of_samples_in_saturation_1 > assert_saturation_limit1 || assert_number_of_samples_in_saturation_2 > assert_saturation_limit2) outputstruct[0].InSaturation = 1;
