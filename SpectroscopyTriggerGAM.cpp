@@ -29,7 +29,19 @@ bool SpectroscopyTriggerGAM::Initialise(ConfigurationDataBase& cdbData){
 	CDBExtended cdb(cdbData);
 	
 	int i;
+//Read config
+	//if(!cdb->Move("trigger_config"))
+	//{
+	//	AssertErrorCondition(InitialisationError,"SpectroscopyTriggerGAM::Initialise: %s Could not move to \"trigger_config\"",this->Name());
+	//	return False;
+	//}
 
+	if(!cdb.ReadInt32(min_time_between_triggers_usec, "min_time_between_triggers_usec"))
+	{
+		AssertErrorCondition(InitialisationError, "SpectroscopyTriggerGAM::Initialise: %s min_time_between_triggers_usec", this->Name());
+		return False;
+	}
+	else AssertErrorCondition(Information, "SpectroscopyTriggerGAM::Initialise: min_time_between_triggers_usec = %d", min_time_between_triggers_usec);
 //Create the signal interfaces
 	if(!AddInputInterface(this->SignalsInputInterface, "SpectroscopyTriggerGAMInputInterface"))
 	{
@@ -49,13 +61,14 @@ bool SpectroscopyTriggerGAM::Initialise(ConfigurationDataBase& cdbData){
 		return False;
 	}
 	
-		int number_of_signals_to_read = 2;
+		int number_of_signals_to_read = 3;
 		FString *CDB_move_to;
 		FString *SignalType;
 		CDB_move_to = new FString[number_of_signals_to_read];
 		SignalType = new FString[number_of_signals_to_read];
-		CDB_move_to[0].Printf("discharge_status");
-		CDB_move_to[1].Printf("usec_discharge_time");
+		CDB_move_to[0].Printf("DischargeStatus");
+		CDB_move_to[1].Printf("usecDischargeTime");
+		CDB_move_to[2].Printf("usecTime");
 		for (i=0;i<number_of_signals_to_read;i++){
 			
 			if(!cdb->Move(CDB_move_to[i].Buffer()))
@@ -126,6 +139,8 @@ bool SpectroscopyTriggerGAM::Initialise(ConfigurationDataBase& cdbData){
 		}
 	cdb->MoveToFather();
 	
+	// Initialization
+	old_elapsedtime = -100000;  // Do not skip first semicycle
 	
 	return True;
 }
@@ -140,23 +155,33 @@ bool SpectroscopyTriggerGAM::Execute(GAM_FunctionNumbers functionNumber){
 
 	OutputInterfaceStruct *outputstruct = (OutputInterfaceStruct *) this->SignalsOutputInterface->Buffer();
 	
-	int dischargestatus;
-	int usec;
+	int dischargestatus;    		// 0 : breakdown, 1 : normal, 2 : inversion
+	int disch_usec;				// usec since last change in dischargestatus
+	int usec;				// total usec since plasma beginning
+	int usec_since_last_trigger;		// usec since last trigger (no, really.)
 	
 	if(functionNumber == GAMOnline){
 		
 		dischargestatus = inputstruct[0].DischargeStatus;
-		usec = inputstruct[0].usecDischargeTime;
-		
-		if(dischargestatus == 1 && usec < 2000) outputstruct[0].SpectroscopyTrigger = 100.0;
-		if(dischargestatus == 1 && usec > 2000) outputstruct[0].SpectroscopyTrigger = 0.0;
+		disch_usec = inputstruct[0].usecDischargeTime;
+		usec = inputstruct[0].usecTime;
+		usec_since_last_trigger = usec - old_elapsedtime;
+
+		// falling edge
+		if(dischargestatus == 1 && usec_since_last_trigger > 2000) outputstruct[0].SpectroscopyTrigger = 0.0;
+
+		// send a trigger in the beginning of a semicycle if it's not too early 
+		if(dischargestatus == 1 && disch_usec < 2000 && usec_since_last_trigger > this->min_time_between_triggers_usec ){
+			outputstruct[0].SpectroscopyTrigger = 100.0;
+			old_elapsedtime = usec;
+		}
 		if(dischargestatus != 1) outputstruct[0].SpectroscopyTrigger = 0.0;
 		
 	}
 	else {
 		
 		outputstruct[0].SpectroscopyTrigger = 0.0;
-		
+		old_elapsedtime = -100000;
 	}
 		
 	this->SignalsOutputInterface->Write();

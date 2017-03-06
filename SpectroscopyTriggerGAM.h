@@ -19,11 +19,13 @@ private:
 	struct InputInterfaceStruct {
 		int DischargeStatus;
 		int usecDischargeTime;
+		int usecTime;
 	};
 	struct OutputInterfaceStruct {
 		float SpectroscopyTrigger;
 	};
-	int old_elapsedtime;	
+	int old_elapsedtime;
+	int min_time_between_triggers_usec;	
 
 public:
 
