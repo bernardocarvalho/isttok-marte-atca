@@ -18,18 +18,18 @@ private:
 	DDBOutputInterface *SignalsOutputInterface;
 
 	struct InputInterfaceStruct {
-		int ADC_magnetic_0;
-		int ADC_magnetic_1;
-		int ADC_magnetic_2;
-		int ADC_magnetic_3;
-		int ADC_magnetic_4;
-		int ADC_magnetic_5;
-		int ADC_magnetic_6;
-		int ADC_magnetic_7;
-		int ADC_magnetic_8;
-		int ADC_magnetic_9;
-		int ADC_magnetic_10;
-		int ADC_magnetic_11;
+		int ADC_magnetic_chopper_fp_0;
+		int ADC_magnetic_chopper_fp_1;
+		int ADC_magnetic_chopper_fp_2;
+		int ADC_magnetic_chopper_fp_3;
+		int ADC_magnetic_chopper_fp_4;
+		int ADC_magnetic_chopper_fp_5;
+		int ADC_magnetic_chopper_fp_6;
+		int ADC_magnetic_chopper_fp_7;
+		int ADC_magnetic_chopper_fp_8;
+		int ADC_magnetic_chopper_fp_9;
+		int ADC_magnetic_chopper_fp_10;
+		int ADC_magnetic_chopper_fp_11;
 		int usectime;
 	};
 	struct OutputInterfaceStruct {
