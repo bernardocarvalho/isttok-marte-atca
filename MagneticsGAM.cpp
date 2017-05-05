@@ -24,7 +24,7 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData) {
 
 	CDBExtended cdb(cdbData);
 
-	int i;
+	int i,j;
 
 	// read config file section: magnetic_probes
 	if (!cdb.ReadInt32(usectime_to_wait_for_starting_operation, "usectime_to_wait_for_starting_operation"))
@@ -193,7 +193,7 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData) {
 		AssertErrorCondition(InitialisationError, "MagneticsGAM::Initialise: %s Could not move to \"input_signals\"", this->Name());
 		return False;
 	}
-	int number_of_signals_to_read = 13;
+	int number_of_signals_to_read = 16;
 	FString *CDB_move_to;
 	FString *SignalType;
 	CDB_move_to = new FString[number_of_signals_to_read];
@@ -274,6 +274,9 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData) {
 	cdb->MoveToFather();
 
 	// Initialise the accumulators
+	this->allmirnv_prim = new float[this->NumberOfProbes];
+	this->allmirnv_hor = new float[this->NumberOfProbes];
+	this->allmirnv_vert = new float[this->NumberOfProbes];
 	this->ADC_values = new float[this->NumberOfProbes];
 	this->corrected_probes = new float[this->NumberOfMeasurements];
 	this->magnetic_Offset_zero = new float[this->NumberOfModules];
@@ -281,6 +284,9 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData) {
 		this->ADC_values[i] = 0.0;
 		this->corrected_probes[i] = 0.0;
 		this->magnetic_Offset_zero[i] = 0.0;
+		this->allmirnv_prim[i]=0.0;
+		this->allmirnv_vert[i] = 0.0;
+		this->allmirnv_hor[i] = 0.0;
 	}
 	magnetic_field_sum = 0.0;
 
@@ -297,9 +303,105 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData) {
 	this->clip_limit = 0.085; // -clip_limit < output r and z position < +clip_limit
 
 	//Some constantants
-	//this ->Area = 2.5e-5; //[m^2]
-	//this->Nvoltas = 50; //
-	//this->MAgPerm = 4*3.16159e-7; //[V*s/A*m]
+	this->Area = 2.5e-5; //[m^2]
+	this->Nvoltas = 50; //
+	this->MAgPerm = 4*3.16159e-7; //[V*s/A*m]
+	this->ADCconst = 10/((2^17)*2e6);
+	this->Ncoils = 12;
+
+//Inicilaizacao das bases de dados pra substrair fluxo magnetico que vem do vertical,horizontal e primario
+
+	this ->primarydata= (float[10]) { -200,-160,-120,-80,-40,0,40,80,120,160 };//[A]
+	this ->horizontaldata =(float [10]) { -70,-56,-42,-28,-14,0,14,28,42,56 };
+	this ->verticaldata=(float[10]) { -300,-240,-180,-120,-60,0,60,120,180,240 };
+
+	this ->mirnprim= new float*[12];
+	for(i=0; i<12;i++){
+    	this ->mirnprim[i]=new float[10];
+	}
+
+
+	this ->mirnhor= new float*[12];
+        for(i=0; i<12;i++){
+        this ->mirnhor[i]=new float[10];
+        }
+	
+	 this ->mirnvert= new float*[12];
+        for(i=0; i<12;i++){
+        this ->mirnvert[i]=new float[10];
+        }
+
+
+	float mirnprim_buff[12][10]={
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 },
+	{ 0,0,0,0,0,0,0,0,0,0 }};
+
+
+
+	float mirnhor_buff[12][10] ={ 
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 }};
+
+	float mirnvert_buff[12][10] ={ 
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 },
+                { 0,0,0,0,0,0,0,0,0,0 }};
+
+
+
+
+	for(i=0;i<12;i++){
+		for(j=0;j<10;j++){
+
+		mirnprim[i][j]=mirnprim_buff[i][j];
+	}}
+
+	for(i=0;i<12;i++){
+                for(j=0;j<10;j++){
+
+                mirnhor[i][j]=mirnhor_buff[i][j];
+        }}
+
+	for(i=0;i<12;i++){
+                for(j=0;j<10;j++){
+
+                mirnvert[i][j]=mirnvert_buff[i][j];
+        }}
+
+
+
+
+
+
 
 	this->radial_coeficients = new float[this->NumberOfProbes];
 	this->vertical_coeficients = new float[this->NumberOfProbes];
@@ -322,7 +424,8 @@ bool MagneticsGAM::Initialise(ConfigurationDataBase& cdbData) {
 		}
 	}
 
-	this->plasma_current_convertion_factor = 4300 * 2.0 * M_PI * this->probe_radius / this->NumberOfMeasurements;
+	//this->plasma_current_convertion_factor = 4300 * 2.0 * M_PI * this->probe_radius / this->NumberOfMeasurements;
+	this->plasma_current_convertion_factor = this->ADCconst*(2.0 * M_PI * this->probe_radius / this->Ncoils)*(1/(this->MAgPerm*this->Nvoltas*this->Area));
 
 	return True;
 }
@@ -336,7 +439,10 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber) {
 	this->SignalsInputInterface->Read();
 	OutputInterfaceStruct *outputstruct = (OutputInterfaceStruct *) this->SignalsOutputInterface->Buffer();
 
-	int i;
+	int i,j;
+	float prim_meas=0.0;
+	float hor_meas=0.0;
+	float vert_meas=0.0;
 
 	ADC_values[0] = (float)inputstruct[0].ADC_magnetic_chopper_fp_0;
 	ADC_values[1] = (float)inputstruct[0].ADC_magnetic_chopper_fp_1;
@@ -351,6 +457,10 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber) {
 	ADC_values[10] = (float)inputstruct[0].ADC_magnetic_chopper_fp_10;
 	ADC_values[11] = (float)inputstruct[0].ADC_magnetic_chopper_fp_11;
 
+	// Measured horizontal, Vertical & Primary currents
+	prim_meas= inputstruct[0].PrimaryCurrent;
+	hor_meas= inputstruct[0].HorizontalCurrent;
+	vert_meas=inputstruct[0].VerticalCurrent;
 
 	//Apply coil polarity factor - OK
 	for (i = 0; i < this->NumberOfMeasurements; i++) {
@@ -385,9 +495,80 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber) {
 				}
 			}
 
-			//Correct using ADC[n]-(m*x+b)
+			//Correct using corrected= ADC[n]-(m*x+b), tirei o 1/100
 			for (i = 0; i < this->NumberOfMeasurements; i++) {
 				corrected_probes[i] = ADC_values[i] - (this->magnetic_Offset_slope[i] * ((inputstruct[0].usectime - usectime_to_wait_for_starting_operation) ) + this->magnetic_Offset_zero[i]);
+			}
+
+
+			//Search in database of currents the closest value compared with the one measured in primary,vertical and horizontal coils
+			// and then..... Search in database magneticflux of each mirnov coil due to primary,horizontal & vertical coils
+			for (j = 0; j < 10; j++) {
+				//primary
+				if(this ->primarydata[j]==prim_meas)
+				{
+					for (i = 0; i < this->NumberOfMeasurements; i++) {
+						allmirnv_prim[i] = this->mirnprim[i][j];
+					}
+					j = 10;
+				}
+
+				if (this->primarydata[j] > prim_meas)
+				{
+					for (i = 0; i < this->NumberOfMeasurements; i++) {
+						allmirnv_prim[i] = this->mirnprim[i][j - 1];
+					}
+					
+					j = 10;
+				}
+				// horizzontal
+
+				if (this->horizontaldata[j] == hor_meas)
+				{
+					for (i = 0; i < this->NumberOfMeasurements; i++) {
+						allmirnv_hor[i] = this->mirnhor[i][j];
+					}
+					j = 10;
+				}
+
+				if (this->horizontaldata[j] > hor_meas)
+				{
+					for (i = 0; i < this->NumberOfMeasurements; i++) {
+						allmirnv_hor[i] = this->mirnhor[i][j - 1];
+					}
+
+					j = 10;
+				}
+
+
+
+				// vertical
+
+				if (this->verticaldata[j] == vert_meas)
+				{
+					for (i = 0; i < this->NumberOfMeasurements; i++) {
+						allmirnv_vert[i] = this->mirnvert[i][j];
+					}
+					j = 10;
+				}
+
+				if (this->verticaldata[j] > vert_meas)
+				{
+					for (i = 0; i < this->NumberOfMeasurements; i++) {
+						allmirnv_vert[i] = this->mirnvert[i][j - 1];
+					}
+
+					j = 10;
+				}
+
+			}
+///////////////////////end of selection from the database
+			
+
+
+			//Substract from corrected_probes magnetic flu values due to the Vertical, Horizontal and Primary coils
+			for (i = 0; i < this->NumberOfMeasurements; i++) {
+				corrected_probes[i] = corrected_probes[i]-allmirnv_vert[i]-allmirnv_hor[i]-allmirnv_prim[i];
 			}
 
 			// Calculate Ip
@@ -396,9 +577,10 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber) {
 				magnetic_field_sum = corrected_probes[i]+ magnetic_field_sum;
 			}
 
-			outputstruct[0].MagneticProbesPlasmaCurrent = magnetic_field_sum;//corrected_probes[11]; //magnetic_field_sum * this->plasma_current_convertion_factor;
+			outputstruct[0].MagneticProbesPlasmaCurrent = magnetic_field_sum*this->plasma_current_convertion_factor;//corrected_probes[11]; 
 
-																			 // Estimate radial_position and vertical_position
+																			
+			// Estimate radial_position and vertical_position
 			radial_position = 0.0;
 			vertical_position = 0.0;
 			/* This was done when the integrators were analogic
@@ -423,6 +605,8 @@ bool MagneticsGAM::Execute(GAM_FunctionNumbers functionNumber) {
 
 			}
 			else {}*/
+
+
 			for(i = 0 ; i < this->NumberOfMeasurements ; i++){
 
 			radial_position += corrected_probes[i] * this->radial_coeficients[this->ProbeNumbers[i]];

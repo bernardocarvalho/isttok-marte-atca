@@ -30,7 +30,11 @@ private:
 		int ADC_magnetic_chopper_fp_9;
 		int ADC_magnetic_chopper_fp_10;
 		int ADC_magnetic_chopper_fp_11;
-		int usectime;
+		//Add signals from primary,vertical and horizontal currents channels 91,92,93
+		float HorizontalCurrent;
+		float VerticalCurrent;
+		float PrimaryCurrent;
+		 int usectime;
 	};
 	struct OutputInterfaceStruct {
 		float MagneticProbesR;
@@ -56,7 +60,27 @@ private:
 	float *magnetic_Offset_zero;
 	float *ADC_values;
 	float *corrected_probes;
+	// Picked values of magneticflux in databases for substraction
+	float *allmirnv_prim;
+	float *allmirnv_hor;
+	float *allmirnv_vert;
 	
+
+	// Arrays with mirnov magneticflux from primary, vertical and horizontal currents (database)
+	float *primarydata; //[A]
+	float *horizontaldata;
+	float *verticaldata;
+	
+	float **mirnprim;
+	
+	float **mirnhor;
+
+	float **mirnvert;
+	
+
+		////////////////////////////////////////////////////////////
+
+
 	float adc18bit_conversion;
 	
 	float *points_x;
@@ -75,6 +99,7 @@ private:
 
 	int n_samples;
 	float probe_radius, major_radius, clip_limit;
+	float Area, Nvoltas, MAgPerm, ADCconst, Ncoils;
 	float radial_position, vertical_position;
 //	float rOffset, zOffset;
 	float magnetic_field_sum;
