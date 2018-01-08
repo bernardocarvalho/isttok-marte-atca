@@ -519,7 +519,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 					
 					
 					if (usec_pre_pulse_time > inputstruct[0].usecTime - usectime_to_wait_for_starting_operation){
-						if (inputstruct[0].PlasmaCurrent > 500){
+						if (inputstruct[0].PlasmaCurrent > 750){
 							in_positive_breakdown_scenario = False; // breakdown successful
 							if (puffing_mode == 4 ) outputstruct[0].PuffingMode = 2;  //end of breakdown -> if puffing mode == 4 -> change to puffing feedback in time windows
 							outputstruct[0].usecDischargeTime = 0;
@@ -562,7 +562,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 					
 					
 					if (usec_pre_pulse_time > inputstruct[0].usecTime - usectime_to_wait_for_starting_operation){
-						if (inputstruct[0].PlasmaCurrent < -500){
+						if (inputstruct[0].PlasmaCurrent < -750){
 							in_negative_breakdown_scenario = False;
 							if (puffing_mode == 4 ) outputstruct[0].PuffingMode = 2;  //end of breakdown -> if puffing mode == 4 -> change to puffing feedback in time windows
 							outputstruct[0].usecDischargeTime = 0;
@@ -606,7 +606,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 					
 					
 					if (maximum_inversion_usectime > inputstruct[0].usecTime - saved_usec_time){
-						if (inputstruct[0].PlasmaCurrent < -500){
+						if (inputstruct[0].PlasmaCurrent < -750){
 							in_inversion_from_positive_to_negative_scenario = False;
 							outputstruct[0].usecDischargeTime = 0;
 							saved_usec_time = inputstruct[0].usecTime;
@@ -653,7 +653,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 					
 					
 					if (maximum_inversion_usectime > inputstruct[0].usecTime - saved_usec_time){
-						if (inputstruct[0].PlasmaCurrent > 500){
+						if (inputstruct[0].PlasmaCurrent > 750){
 							in_inversion_from_negative_to_positive_scenario = False;
 							outputstruct[0].usecDischargeTime = 0;
 							saved_usec_time = inputstruct[0].usecTime;
