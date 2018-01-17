@@ -84,6 +84,7 @@ private:
 	
 	struct OutputInterfaceStruct {
 		int32 SoftStop;
+		float ReceiveValue;
 	};
 
 

@@ -149,26 +149,49 @@ bool PowerSupplyCommunicatorGAM::Initialise(ConfigurationDataBase& cdbData){
 		}
 
 	cdb->MoveToFather();
-
-	if(!cdb->Move("output_signals.soft_stop"))
+	
+//	OUTPUT SIGNALS (interface)
+	if(!cdb->Move("output_signals"))
 	{
-		AssertErrorCondition(InitialisationError,"PowerSupplyCommunicatorGAM::Initialise: %s Could not move to \"output_signals.soft_stop\"",this->Name());
+		AssertErrorCondition(InitialisationError,"owerSupplyCommunicatorGAM::Initialise: %s Could not move to \"output_signals\"",this->Name());
 		return False;
 	}
 	
-		if(cdb->Exists("SignalName"))
-		{
-			FString SignalName;
-			cdb.ReadFString(SignalName, "SignalName");
-			AssertErrorCondition(Information,"PowerSupplyCommunicatorGAM::Initialise: Added signal = %s", SignalName.Buffer());
+		number_of_signals_to_read = 2;
+		CDB_move_to = new FString[number_of_signals_to_read];
+		SignalType = new FString[number_of_signals_to_read];
+		CDB_move_to[0].Printf("soft_stop");
+		CDB_move_to[1].Printf("ReceiveValue");
+		for (i=0;i<number_of_signals_to_read;i++){
 			
-			if(!this->SignalsOutputInterface->AddSignal(SignalName.Buffer(), "int32"))
+			if(!cdb->Move(CDB_move_to[i].Buffer()))
 			{
-				AssertErrorCondition(InitialisationError,"PowerSupplyCommunicatorGAM::Initialise: %s failed to add signal", this->Name());
+				AssertErrorCondition(InitialisationError,"owerSupplyCommunicatorGAM::Initialise: %s Could not move to \"%s\"",this->Name(),CDB_move_to[i].Buffer());
 				return False;
 			}
+			
+			if(cdb->Exists("SignalType"))
+			{
+				FString signalName;
+				cdb.ReadFString(SignalType[i], "SignalType");
+			}
+			if(cdb->Exists("SignalName"))
+			{
+				FString SignalName;
+				cdb.ReadFString(SignalName, "SignalName");
+				AssertErrorCondition(Information,"owerSupplyCommunicatorGAM::Initialise: Added signal = %s", SignalName.Buffer());
+				
+				if(!this->SignalsOutputInterface->AddSignal(SignalName.Buffer(), SignalType[i].Buffer()))
+				{
+					AssertErrorCondition(InitialisationError,"owerSupplyCommunicatorGAM::Initialise: %s failed to add signal", this->Name());
+					return False;
+				}
+			}
+			cdb->MoveToFather();
 		}
+
 	cdb->MoveToFather();
+
 
 	this->isCharged = False;
 	this->isStarted = False;
@@ -244,7 +267,7 @@ bool PowerSupplyCommunicatorGAM::Execute(GAM_FunctionNumbers functionNumber){
 			this->GetMessages();
 			this->IsTriggered = True;
 			this->PlasmaEnded = False;
-
+			outputstruct[0].ReceiveValue = this->logReceivedCurrents[this->logReceivedPointer];
 		}
 		else if (IsTriggered){
 		    this->GetMessages();
