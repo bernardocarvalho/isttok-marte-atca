@@ -182,10 +182,10 @@ bool MachineProtectionGAM::Execute(GAM_FunctionNumbers functionNumber){
 		inputstruct[0].PrimaryCurrent;
 		inputstruct[0].IronCoreSaturation;
 
-		//if |Ip| > 1kA 
-		if (inputstruct[0].PlasmaCurrent * inputstruct[0].PlasmaCurrent > 1000000){
-			// second methode for iron core saturation predictor, calculated_saturation_value = 28 * 28 * Iprim * Iprim / (Ip * Ip + 100), good threshold = 1.25
-			calculated_saturation_value = 784 * inputstruct[0].PrimaryCurrent * inputstruct[0].PrimaryCurrent / (inputstruct[0].PlasmaCurrent * inputstruct[0].PlasmaCurrent + 100);
+		//if |Iprim| > 25 
+		if (inputstruct[0].PrimaryCurrent * inputstruct[0].PrimaryCurrent > 625){
+			// second methode for iron core saturation predictor, calculated_saturation_value = 28 * 28 * (Iprim * Iprim) / (Ip * Ip + 280 * 280), good threshold = 1.25
+			calculated_saturation_value = 784 * inputstruct[0].PrimaryCurrent * inputstruct[0].PrimaryCurrent / (inputstruct[0].PlasmaCurrent * inputstruct[0].PlasmaCurrent + 280 * 280);
 		}
 		else calculated_saturation_value = 0;
 		

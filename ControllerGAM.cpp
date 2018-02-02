@@ -697,14 +697,14 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 				if (inputstruct[0].PlasmaCurrent < inputstruct[0].PrimaryOutputWaveform) outputstruct[0].SendToPrimaryValue += (this->maximum_primary_current - this->minimum_primary_current)/400;
 				else outputstruct[0].SendToPrimaryValue -= (this->maximum_primary_current - this->minimum_primary_current)/400;	
 
-				if (inputstruct[0].PrimaryCurrent > 25){
+				if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750){
 				
 					if (inputstruct[0].PositionR > (inputstruct[0].VerticalOutputWaveform/1000)) outputstruct[0].SendToVerticalValue += (this->maximum_vertical_current - this->minimum_vertical_current )/200;
 					else outputstruct[0].SendToVerticalValue -= (this->maximum_vertical_current - this->minimum_vertical_current )/200;
 					if (inputstruct[0].PositionZ > (inputstruct[0].HorizontalOutputWaveform/1000)) outputstruct[0].SendToHorizontalValue -= (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
 					else outputstruct[0].SendToHorizontalValue += (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
 				}
-				if (inputstruct[0].PrimaryCurrent < -25 ){
+				if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent > -750){
 					if (inputstruct[0].PositionR < (inputstruct[0].VerticalOutputWaveform/1000)) outputstruct[0].SendToVerticalValue += (this->maximum_vertical_current - this->minimum_vertical_current )/200;
 					else outputstruct[0].SendToVerticalValue -= (this->maximum_vertical_current - this->minimum_vertical_current )/200;
 					if (inputstruct[0].PositionZ < (inputstruct[0].HorizontalOutputWaveform/1000)) outputstruct[0].SendToHorizontalValue -= (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
@@ -746,10 +746,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 														
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
 					
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
@@ -766,10 +766,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
 					
-						if (inputstruct[0].PrimaryCurrent < -25) {
+						if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 							outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 						}
-						if (inputstruct[0].PrimaryCurrent > 25) {
+						if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 							outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 						}
 						// else: keep the output (no changes)
@@ -792,10 +792,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 				
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
 					
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
@@ -808,10 +808,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
 					
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					// else: keep the output (no changes)
@@ -834,10 +834,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 				
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
 					
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
@@ -850,10 +850,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
 					
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					// else: keep the output (no changes)
@@ -876,10 +876,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 				
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
 					
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
@@ -892,10 +892,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
 					
-					if (inputstruct[0].PrimaryCurrent < -25) {
+					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
 						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
-					if (inputstruct[0].PrimaryCurrent > 25) {
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
 						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					// else: keep the output (no changes)
@@ -970,13 +970,13 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 							puffing_feedback_currently_off = False;
 						}
 
-						if (puffing_feedback_mode == 1 && (inputstruct[0].PrimaryCurrent > 25 || inputstruct[0].PrimaryCurrent < -25) ){  // feedback in density
+						if (puffing_feedback_mode == 1 && ((inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) || (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750))){  // feedback in density
 							if ( inputstruct[0].PuffingOutputWaveform < inputstruct[0].Density) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change + puffing_feedback_usec_change_per_cycle;
 							if ( inputstruct[0].PuffingOutputWaveform > inputstruct[0].Density) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change - puffing_feedback_usec_change_per_cycle;
 							if ( puffing_feedback_usectime_to_change > maximum_idle_time_in_puffing_feedback_in_us ) puffing_feedback_usectime_to_change = maximum_idle_time_in_puffing_feedback_in_us;
 							if ( puffing_feedback_usectime_to_change < minimum_idle_time_in_puffing_feedback_in_us ) puffing_feedback_usectime_to_change = minimum_idle_time_in_puffing_feedback_in_us;
 						} 
-						if(puffing_feedback_mode == 2 && (inputstruct[0].PrimaryCurrent > 25 || inputstruct[0].PrimaryCurrent <-25)  ) {		// feedback in h-alpha
+						if(puffing_feedback_mode == 2 && ((inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) || (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent > -750))) {		// feedback in h-alpha
 							if ( inputstruct[0].PuffingOutputWaveform < inputstruct[0].HAlpha) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change + puffing_feedback_usec_change_per_cycle;
 							if ( inputstruct[0].PuffingOutputWaveform > inputstruct[0].HAlpha) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change - puffing_feedback_usec_change_per_cycle;
 							if ( puffing_feedback_usectime_to_change > maximum_idle_time_in_puffing_feedback_in_us ) puffing_feedback_usectime_to_change = maximum_idle_time_in_puffing_feedback_in_us;
