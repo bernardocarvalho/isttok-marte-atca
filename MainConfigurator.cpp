@@ -795,6 +795,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[0] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[0] == 6) hmStream.Printf("  Integrated control*");
 			else if (timewindows_dropdown_vector[0] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[0] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 562px; left: 236px;\"");
@@ -807,6 +808,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[1] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[1] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[1] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[1] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 562px; left: 370px;\"");
@@ -819,6 +821,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[2] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[2] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[2] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[2] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 584px; left: 94px;\"");
@@ -831,6 +834,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[3] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[3] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[3] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[3] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 584px; left: 236px;\"");
@@ -843,6 +847,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[4] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[4] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[4] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[4] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 584px; left: 370px;\"");
@@ -855,6 +860,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[5] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[5] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[5] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[5] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 606px; left: 94px;\"");
@@ -867,6 +873,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[6] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[6] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[6] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[6] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 606px; left: 236px;\"");
@@ -879,6 +886,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[7] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[7] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[7] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[7] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 606px; left: 370px;\"");
@@ -891,6 +899,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[8] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[8] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[8] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[8] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 	
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 628px; left: 94px;\""); 
@@ -903,6 +912,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[9] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[9] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[9] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[9] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 628px; left: 236px;\"");
@@ -915,6 +925,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[10] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[10] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[10] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[10] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 628px; left: 370px;\"");
@@ -927,6 +938,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[11] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[11] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[11] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[11] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 650px; left: 94px;\""); 
@@ -939,6 +951,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[12] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[12] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[12] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[12] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 650px; left: 236px;\"");
@@ -951,6 +964,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[13] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[13] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[13] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[13] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 650px; left: 370px;\"");
@@ -963,6 +977,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[14] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[14] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[14] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[14] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 672px; left: 94px;\""); 
@@ -975,6 +990,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[15] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[15] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[15] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[15] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 672px; left: 236px;\"");
@@ -987,6 +1003,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[16] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[16] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[16] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[16] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 672px; left: 370px;\"");
@@ -999,6 +1016,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[17] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[17] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[17] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[17] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 694px; left: 94px;\""); 
@@ -1011,6 +1029,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[18] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[18] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[18] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[18] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 694px; left: 236px;\"");
@@ -1023,6 +1042,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[19] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[19] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[19] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[19] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 694px; left: 370px;\"");
@@ -1035,6 +1055,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[20] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[20] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[20] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[20] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 	
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 762px; left: 94px;\""); 
@@ -1047,6 +1068,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[21] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[21] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[21] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[21] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 762px; left: 236px;\"");
@@ -1059,6 +1081,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[22] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[22] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[22] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[22] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 762px; left: 370px;\"");
@@ -1071,6 +1094,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[23] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[23] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[23] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[23] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 784px; left: 94px;\"");
@@ -1083,6 +1107,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[24] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[24] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[24] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[24] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 784px; left: 236px;\"");
@@ -1095,6 +1120,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[25] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[25] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[25] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[25] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 784px; left: 370px;\"");
@@ -1107,6 +1133,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[26] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[26] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[26] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[26] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 806px; left: 94px;\"");
@@ -1119,6 +1146,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[27] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[27] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[27] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[27] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 806px; left: 236px;\"");
@@ -1131,6 +1159,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[28] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[28] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[28] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[28] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 806px; left: 370px;\"");
@@ -1143,6 +1172,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[29] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[29] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[29] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[29] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 	
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 828px; left: 94px;\""); 
@@ -1155,6 +1185,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[30] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[30] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[30] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[30] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 828px; left: 236px;\"");
@@ -1167,6 +1198,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[31] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[31] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[31] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[31] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 828px; left: 370px;\"");
@@ -1179,6 +1211,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[32] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[32] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[32] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[32] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 850px; left: 94px;\""); 
@@ -1191,6 +1224,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[33] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[33] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[33] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[33] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 850px; left: 236px;\"");
@@ -1203,6 +1237,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[34] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[34] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[34] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[34] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 850px; left: 370px;\"");
@@ -1215,6 +1250,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[35] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[35] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[35] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[35] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 872px; left: 94px;\""); 
@@ -1227,6 +1263,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[36] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[36] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[36] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[36] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 872px; left: 236px;\"");
@@ -1239,6 +1276,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[37] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[37] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[37] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[37] == 8) hmStream.Printf("           MIMO Control");
+			else if (timewindows_dropdown_vector[37] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 872px; left: 370px;\"");
@@ -1251,6 +1290,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[38] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[38] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[38] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[38] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 894px; left: 94px;\""); 
@@ -1263,6 +1303,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[39] == 5) hmStream.Printf("Ip control-Auto PID");
 			else if (timewindows_dropdown_vector[39] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[39] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[39] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 894px; left: 236px;\"");
@@ -1275,6 +1316,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[40] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[40] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[40] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[40] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 894px; left: 370px;\"");
@@ -1287,6 +1329,7 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[41] == 5) hmStream.Printf(" position-Auto PID");
 			else if (timewindows_dropdown_vector[41] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[41] == 7) hmStream.Printf("           Invert*");
+			else if (timewindows_dropdown_vector[41] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 	}
@@ -1313,6 +1356,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[0] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[0] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1334,6 +1379,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[1] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[1] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1355,6 +1402,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[2] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[2] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1376,6 +1425,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[3] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[3] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1397,6 +1448,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[4] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[4] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1418,6 +1471,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[5] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[5] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1439,6 +1494,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[6] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[6] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1460,6 +1517,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[7] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[7] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1481,6 +1540,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[8] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[8] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 	
@@ -1502,6 +1563,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[9] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[9] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1523,6 +1586,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[10] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[10] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1544,6 +1609,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[11] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[11] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1565,6 +1632,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[12] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[12] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1586,6 +1655,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[13] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[13] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1607,6 +1678,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[14] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[14] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1628,6 +1701,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[15] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[15] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1649,6 +1724,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[16] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[16] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1670,6 +1747,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[17] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[17] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1691,6 +1770,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[18] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[18] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1712,6 +1793,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[19] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[19] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1733,6 +1816,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[20] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[20] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 	
@@ -1754,6 +1839,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[21] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[21] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1775,6 +1862,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[22] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[22] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1796,6 +1885,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[23] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[23] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1817,6 +1908,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[24] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[24] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1838,6 +1931,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[25] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[25] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1859,6 +1954,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[26] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[26] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1880,6 +1977,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[27] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[27] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1901,6 +2000,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[28] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[28] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1922,6 +2023,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[29] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[29] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 	
@@ -1943,6 +2046,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[30] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[30] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1964,6 +2069,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[31] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[31] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -1985,6 +2092,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[32] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[32] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2006,6 +2115,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[33] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[33] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2027,6 +2138,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[34] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[34] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2048,6 +2161,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[35] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[35] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2069,6 +2184,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[36] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[36] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2090,6 +2207,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[37] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[37] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");												
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2111,6 +2230,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[38] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[38] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2132,6 +2253,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[39] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[39] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2153,6 +2276,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[40] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[40] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -2174,6 +2299,8 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=6>Integrated control*</option");
 				if (timewindows_dropdown_vector[41] == 7) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=7>Invert*</option");
 				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=7>Invert*</option");
+				if (timewindows_dropdown_vector[41] == 8) hmStream.SSPrintf(HtmlTagStreamMode, "option selected=\"selected\" value=8>MIMO control</option");
+				else hmStream.SSPrintf(HtmlTagStreamMode, "option value=8>MIMO Control</option");
 			hmStream.SSPrintf(HtmlTagStreamMode, "/select");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
@@ -8829,7 +8956,7 @@ bool MainConfigurator::SortTimeWindows(){
 
 	count = 0;
 	for (i=0;i<7;i++) if(timewindows_bool_vector[i]) count++;
-	if (count == 0 ){
+	if (count == 0 ) {
 		positive_time_windows_values = new float[1];
 		positive_primary_mode = new int[1];
 		positive_vertical_mode = new int[1];
@@ -8860,15 +8987,15 @@ bool MainConfigurator::SortTimeWindows(){
 		positive_vertical_mode = new int[1];
 		positive_horizontal_mode = new int[1];
 
-		if (timewindows_dropdown_vector[0] >= 6){
+		if (timewindows_dropdown_vector[0] >= 6 && timewindows_dropdown_vector[0] < 8){
 			timewindows_dropdown_vector[1] = timewindows_dropdown_vector[0];
 			timewindows_dropdown_vector[2] = timewindows_dropdown_vector[0];
 		}
-		if (timewindows_dropdown_vector[1] >= 6){
+		if (timewindows_dropdown_vector[1] >= 6 && timewindows_dropdown_vector[1] < 8){
 			timewindows_dropdown_vector[0] = timewindows_dropdown_vector[1];
 			timewindows_dropdown_vector[2] = timewindows_dropdown_vector[1];
 		}
-		if (timewindows_dropdown_vector[2] >= 6){
+		if (timewindows_dropdown_vector[2] >= 6 && timewindows_dropdown_vector[2] < 8){
 			timewindows_dropdown_vector[0] = timewindows_dropdown_vector[2];
 			timewindows_dropdown_vector[1] = timewindows_dropdown_vector[2];
 		}
@@ -8928,15 +9055,15 @@ bool MainConfigurator::SortTimeWindows(){
 		}
 		for (i=0;i<j;i++){
 				
-			if (timewindows_dropdown_vector[(i*3)] >= 6){
+			if (timewindows_dropdown_vector[(i*3)] >= 6 && timewindows_dropdown_vector[(i * 3)] < 8){
 				timewindows_dropdown_vector[(i*3+1)] = timewindows_dropdown_vector[(i*3)];
 				timewindows_dropdown_vector[(i*3+2)] = timewindows_dropdown_vector[(i*3)];
 			}
-			if (timewindows_dropdown_vector[(i*3+1)] >= 6){
+			if (timewindows_dropdown_vector[(i*3+1)] >= 6 && timewindows_dropdown_vector[(i * 3 + 1)] < 8){
 				timewindows_dropdown_vector[(i*3)] = timewindows_dropdown_vector[(i*3+1)];
 				timewindows_dropdown_vector[(i*3+2)] = timewindows_dropdown_vector[(i*3+1)];
 			}
-			if (timewindows_dropdown_vector[(i*3+2)] >= 6){
+			if (timewindows_dropdown_vector[(i*3+2)] >= 6 && timewindows_dropdown_vector[(i * 3 + 2 )] < 8){
 				timewindows_dropdown_vector[(i*3)] = timewindows_dropdown_vector[(i*3+2)];
 				timewindows_dropdown_vector[(i*3+1)] = timewindows_dropdown_vector[(i*3+2)];
 			}
@@ -9069,15 +9196,15 @@ bool MainConfigurator::SortTimeWindows(){
 		positive_vertical_mode = new int[1];
 		positive_horizontal_mode = new int[1];
 
-		if (timewindows_dropdown_vector[21] >= 6){
+		if (timewindows_dropdown_vector[21] >= 6 && timewindows_dropdown_vector[21] < 8){
 			timewindows_dropdown_vector[22] = timewindows_dropdown_vector[21];
 			timewindows_dropdown_vector[23] = timewindows_dropdown_vector[21];
 		}
-		if (timewindows_dropdown_vector[22] >= 6){
+		if (timewindows_dropdown_vector[22] >= 6 && timewindows_dropdown_vector[22] < 8){
 			timewindows_dropdown_vector[21] = timewindows_dropdown_vector[22];
 			timewindows_dropdown_vector[23] = timewindows_dropdown_vector[22];
 		}
-		if (timewindows_dropdown_vector[23] >= 6){
+		if (timewindows_dropdown_vector[23] >= 6 && timewindows_dropdown_vector[23] < 8){
 			timewindows_dropdown_vector[21] = timewindows_dropdown_vector[23];
 			timewindows_dropdown_vector[22] = timewindows_dropdown_vector[23];
 		}
@@ -9136,15 +9263,15 @@ bool MainConfigurator::SortTimeWindows(){
 		}
 		for (i=0;i<j;i++){
 				
-			if (timewindows_dropdown_vector[((i+7)*3)] >= 6){
+			if (timewindows_dropdown_vector[((i+7)*3)] >= 6 && timewindows_dropdown_vector[((i+7)*3)] < 8){
 				timewindows_dropdown_vector[((i+7)*3+1)] = timewindows_dropdown_vector[((i+7)*3)];
 				timewindows_dropdown_vector[((i+7)*3+2)] = timewindows_dropdown_vector[((i+7)*3)];
 			}
-			if (timewindows_dropdown_vector[((i+7)*3+1)] >= 6){
+			if (timewindows_dropdown_vector[((i+7)*3+1)] >= 6 && timewindows_dropdown_vector[((i+7)*3+1)] < 8){
 				timewindows_dropdown_vector[((i+7)*3)] = timewindows_dropdown_vector[((i+7)*3+1)];
 				timewindows_dropdown_vector[((i+7)*3+2)] = timewindows_dropdown_vector[((i+7)*3+1)];
 			}
-			if (timewindows_dropdown_vector[((i+7)*3+2)] >= 6){
+			if (timewindows_dropdown_vector[((i+7)*3+2)] >= 6 && timewindows_dropdown_vector[((i+7)*3+2)]  < 8){
 				timewindows_dropdown_vector[((i+7)*3)] = timewindows_dropdown_vector[((i+7)*3+2)];
 				timewindows_dropdown_vector[((i+7)*3+1)] = timewindows_dropdown_vector[((i+7)*3+2)];
 			}

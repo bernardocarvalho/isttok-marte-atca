@@ -7,6 +7,7 @@
 #include "DDBOutputInterface.h"
 #include "GAM.h"
 #include "HtmlStream.h"
+#include "Matrix.h"
 
 OBJECT_DLL(MagneticsGAM)
 
@@ -52,6 +53,55 @@ private:
 		float ADC_magnetic_WO_corrctd_9;
 		float ADC_magnetic_WO_corrctd_10;
 		float ADC_magnetic_WO_corrctd_11;
+		// Mirnov coil measurements without the effect from the external fields
+		float Magnetics_flux_corrctd_0;
+		float Magnetics_flux_corrctd_1;
+		float Magnetics_flux_corrctd_2;
+		float Magnetics_flux_corrctd_3;
+		float Magnetics_flux_corrctd_4;
+		float Magnetics_flux_corrctd_5;
+		float Magnetics_flux_corrctd_6;
+		float Magnetics_flux_corrctd_7;
+		float Magnetics_flux_corrctd_8;
+		float Magnetics_flux_corrctd_9;
+		float Magnetics_flux_corrctd_10;
+		float Magnetics_flux_corrctd_11;
+		// Extracted signals reconstructed from the PS measurements
+		float Magnetics_ext_flux_0;
+		float Magnetics_ext_flux_1;
+		float Magnetics_ext_flux_2;
+		float Magnetics_ext_flux_3;
+		float Magnetics_ext_flux_4;
+		float Magnetics_ext_flux_5;
+		float Magnetics_ext_flux_6;
+		float Magnetics_ext_flux_7;
+		float Magnetics_ext_flux_8;
+		float Magnetics_ext_flux_9;
+		float Magnetics_ext_flux_10;
+		float Magnetics_ext_flux_11;
+		// Radial and vertical position and plasma current with flux corrections
+		float Magnetics_R_uncorrctd;
+		float Magnetics_z_uncorrctd;
+		float Magnetics_Ip_corrctd;
+		// Variables from the position reconstruction
+		float RMSE_mirnv;
+		//new
+		float SumIfil;
+		//end
+		//float RMSE_Ifil;
+		float Magnetics_SVD_recons_0;
+		float Magnetics_SVD_recons_1;
+		float Magnetics_SVD_recons_2;
+		float Magnetics_SVD_recons_3;
+		float Magnetics_SVD_recons_4;
+		float Magnetics_SVD_recons_5;
+		float Magnetics_SVD_recons_6;
+		float Magnetics_SVD_recons_7;
+		float Magnetics_SVD_recons_8;
+		float Magnetics_SVD_recons_9;
+		float Magnetics_SVD_recons_10;
+		float Magnetics_SVD_recons_11;
+
 
 	};
 
@@ -63,6 +113,13 @@ private:
 	int accumulatorcounter;
 	float buff;
 	int k;
+	int i;
+	int j;
+	int m;
+	int n;
+	int o;
+	int p;
+	int doonce;
 	int usectime_to_wait_for_starting_operation;
 	bool magnetic_radial_bool;
 	bool magnetic_vertical_bool;
@@ -87,23 +144,80 @@ private:
 	float *slope_avrg;
 	float *ADC_fact;
 	float *ADC_WO_Wb;
+	
+	// Matrix for miltufilament model
+	float *Mpf_SVD;
+	float *Mfp;
+	float *Ipf_corr;
+	float *Ipf;
+	float *Bmag_rec;
+	float *Bmag_rec_corr;
+	float *IfilR;
+	float *IfilZ;
+	float sum_Ifil;
+	float sum_Ifil_corr;
+	float Ipf_buff;
+	float Ipf_corr_buff;
+	float division;
+	float division_corr;
+	//add from UNINA
+	float numFilament;//number of filament
+	float Bmag_rec_buff;
+	float Bmag_rec_corr_buff;
+	float Rmse_buff;
+	float RMSE_mirnv;
+	float PlasmaCurrent;
+	//end
+	
+	//Cenas pra os modelos em espaço de estados
+	float *x_prim;
+	float *x_vert;
+	float **x_hor;
+	float **x_hor_buff;
+	float x_hor_cpy;
+	float *x_hor_vec;
+	float *x_buff_hor;
+	float *x_test;
+	
+	
+	
+	float *A_prim;
+	float *A_vert;
+	float ***A_hor;
+	float *A_hor_vec;
+	
+	float *B_prim;
+	float *B_vert;
+	float **B_hor;
+	float *B_hor_vec;
+	
+	float *C_prim;
+	float *C_vert;
+	float ** C_hor;
+	float *C_hor_vec;
+	//MatrixT<float>C_hor;
+	//float C_hor[][];
+	float *y_prim;
+	float *y_vert;
+	float *y_hor;
+	float buffer_hor;
+	float y_buff2;
+	// Sinal Reconstruido a partir dos fluxos externos
+	float *ADC_ext_flux;
+	// Sinal das mirnov sem a contribuição dos campos externos
+	float *ADC_final;
+	
 
 	// Picked values of magneticflux in databases for substraction
 	float *allmirnv_prim;
 	float *allmirnv_hor;
 	float *allmirnv_vert;
 	
-
-	// Arrays with mirnov magneticflux from primary, vertical and horizontal currents (database)
-	float *primarydata; //[A]
-	float *horizontaldata;
-	float *verticaldata;
-	float **mirnprim;
+	// cenas pràs correntes
 	
-	float **mirnhor;
-
-	float **mirnvert;
-	
+	float prim_meas;
+	float hor_meas;
+	float vert_meas;
 
 		////////////////////////////////////////////////////////////
 
@@ -128,9 +242,10 @@ private:
 	float probe_radius, major_radius, clip_limit;
 	float Area, Nvoltas, MAgPerm, ADCconst, Ncoils;
 	float radial_position, vertical_position;
+	float radial_position_corr, vertical_position_corr;
 //	float rOffset, zOffset;
 	float magnetic_field_sum;
-
+	float magnetic_field_sum_corr;
 	bool view_input_variables;
 
 public:

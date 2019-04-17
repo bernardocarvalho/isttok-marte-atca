@@ -636,7 +636,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 						last_dischage_status = -3;
 					}
 					else {
-						AssertErrorCondition(InitialisationError,"TimeWindowsGAM::Execute: inversion_from_positive_to_negative not successful at %d us - skip phase !!!",inputstruct[0].usecTime);
+						//AssertErrorCondition(InitialisationError,"TimeWindowsGAM::Execute: inversion_from_positive_to_negative not successful at %d us - skip phase !!!",inputstruct[0].usecTime);
 						in_inversion_from_positive_to_negative_scenario = False;
 						outputstruct[0].usecDischargeTime = 0;
 						saved_usec_time = inputstruct[0].usecTime;
@@ -683,7 +683,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 						last_dischage_status = -3;
 					}
 					else {
-						AssertErrorCondition(InitialisationError,"TimeWindowsGAM::Execute: inversion_from_negative_to_positive not successful at %d us - skip phase !!!",inputstruct[0].usecTime);
+						//AssertErrorCondition(InitialisationError,"TimeWindowsGAM::Execute: inversion_from_negative_to_positive not successful at %d us - skip phase !!!",inputstruct[0].usecTime);
 						in_inversion_from_negative_to_positive_scenario = False;
 						outputstruct[0].usecDischargeTime = 0;
 						saved_usec_time = inputstruct[0].usecTime;
@@ -700,7 +700,7 @@ bool TimeWindowsGAM::Execute(GAM_FunctionNumbers functionNumber){
 						if (outputstruct[0].PlasmaDirection == 0) in_inversion_from_negative_to_positive_scenario = True;
 						else if (outputstruct[0].PlasmaDirection == 1) in_inversion_from_positive_to_negative_scenario = True;
 					}   //save usec_time for starting inversion waveform at 0s;
-					AssertErrorCondition(InitialisationError,"TimeWindowsGAM::Execute: IRON CORE SATURATION ACHIVED at %d us !!!",inputstruct[0].usecTime );
+					//AssertErrorCondition(InitialisationError,"TimeWindowsGAM::Execute: IRON CORE SATURATION ACHIVED at %d us !!!",inputstruct[0].usecTime );
 					
 				}
 				if ( !in_positive_breakdown_scenario  && !in_negative_breakdown_scenario  && !in_inversion_from_positive_to_negative_scenario  && !in_inversion_from_negative_to_positive_scenario && inputstruct[0].InSaturation == 0 ){
