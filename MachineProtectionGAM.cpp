@@ -181,6 +181,25 @@ bool MachineProtectionGAM::Execute(GAM_FunctionNumbers functionNumber){
 		inputstruct[0].PlasmaCurrent;
 		inputstruct[0].PrimaryCurrent;
 		inputstruct[0].IronCoreSaturation;
+		
+		// Software circuit breakers ############
+		// if |Iprim| > 100 shutdown everything
+		#define MAXPRIM 250
+		#define MAXVERT 500
+		#define MAXHORI 300
+		if (inputstruct[0].PrimaryCurrent * inputstruct[0].PrimaryCurrent > (MAXPRIM*MAXPRIM)){
+			outputstruct[0].HardStopBool = True;
+		}
+		else if (inputstruct[0].VerticalCurrent * inputstruct[0].VerticalCurrent > (MAXVERT*MAXVERT)){
+			outputstruct[0].HardStopBool = True;
+		}
+		else if (inputstruct[0].HorizontalCurrent * inputstruct[0].HorizontalCurrent > (MAXHORI*MAXHORI)){
+			outputstruct[0].HardStopBool = True;
+		}
+		else {
+			outputstruct[0].HardStopBool = False;
+			outputstruct[0].SlowStopBool = False;
+		}
 
 		//if |Iprim| > 25 
 		if (inputstruct[0].PrimaryCurrent * inputstruct[0].PrimaryCurrent > 625){
@@ -203,9 +222,7 @@ bool MachineProtectionGAM::Execute(GAM_FunctionNumbers functionNumber){
 		
 		if ( assert_number_of_samples_in_saturation_1 > assert_saturation_limit1 || assert_number_of_samples_in_saturation_2 > assert_saturation_limit2) outputstruct[0].InSaturation = 1;
 		else outputstruct[0].InSaturation = 0;
-
-		outputstruct[0].HardStopBool = False;
-		outputstruct[0].SlowStopBool = False;	
+	
 
 	}
 	else {
