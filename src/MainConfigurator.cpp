@@ -1277,7 +1277,6 @@ bool MainConfigurator::PrintHTTPForm(HtmlStream &hmStream){
 			else if (timewindows_dropdown_vector[37] == 6) hmStream.Printf(" Integrated control*");
 			else if (timewindows_dropdown_vector[37] == 7) hmStream.Printf("           Invert*");
 			else if (timewindows_dropdown_vector[37] == 8) hmStream.Printf("           MIMO Control");
-			else if (timewindows_dropdown_vector[37] == 8) hmStream.Printf("           MIMO Control");
 		hmStream.SSPrintf(HtmlTagStreamMode, "/div");
 
 		hmStream.SSPrintf(HtmlTagStreamMode, "div style=\"position: absolute; top: 872px; left: 370px;\"");

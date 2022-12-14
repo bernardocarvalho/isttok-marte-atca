@@ -10,6 +10,7 @@
 #include "HtmlStream.h"
 #include "IPID.h"
 #include "IWaveform.h"
+#include "LQR.h"
 
 OBJECT_DLL(ControllerGAM)
 
@@ -40,6 +41,7 @@ private:
 		int32 VerticalWaveformMode;
 		int32 usecTime;
 		int32 DischargeStatus;
+
 	};
 	struct OutputInterfaceStruct {
 		float SendToHorizontalValue;
@@ -47,6 +49,8 @@ private:
 		float SendToPrimaryValue;
 		float SendToPuffing;
 		float SendToToroidal;
+		float R_recons;
+		float Z_recons;
 	};
 		
 	int old_PrimaryWaveformMode;
@@ -60,6 +64,19 @@ private:
 	IPID *vertical_position_PID;
 	IPID *primary_plasma_current_PID;
 
+	LQR *Kalman_LQR_var;
+	Kalman CentroidPos;
+	LQRouputs LQRcurrents;
+	
+	float Radial_pos;
+	float Vertical_pos;
+	float IVertical;
+	float IHorizontal;
+	float SendToVer_buff;
+	float SendToHor_buff;
+	int changeDetec;
+	int firstcycle;
+	
 	int horizontal_lookuptable_size;
 	int vertical_lookuptable_size;
 	int primary_lookuptable_size;
@@ -138,7 +155,11 @@ private:
 	float PID_primary_derivative_soft;
 	float PID_primary_derivative_normal;
 	float PID_primary_derivative_hard;
+	
 
+	// stuff for MIMO control
+	float *MIMO_outputs;
+	
 	bool view_input_variables;
 	
 	int puffing_mode;

@@ -33,20 +33,20 @@ LIBRARIES = -lBaseLib2
 CFLAGSPEC= -D_LINUX -DUSE_PTHREAD -pthread
 
 
-all : $(OBJECTS)
+all : $(OBJS)
 	echo $(OBJECTS)
-	gcc -O3 $(CFLAGS) $(LIBRARY_PATH) -shared -fPIC $(OBJECTS) $(LIBRARIES) -o linux/isttokbiblio.so
+	gcc -O3 $(CFLAGS) $(LIBRARY_PATH) -shared -fPIC $(OBJS) $(LIBRARIES) -o linux/isttokbiblio.so
 	touch linux/libisttokbiblio.so
 	rm linux/libisttokbiblio.so
 	ln -fns isttokbiblio.so linux/libisttokbiblio.so
 
 
-$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
-	echo $(SOURCES)
-	gcc -O3 -c $(CFLAGS) $(CFLAGSPEC) $(LIBRARY_PATH) $(LIBRARIES) -c $< -o $@
+#$(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.cpp
+#	echo $(SOURCES)
+#	gcc -O3 -c $(CFLAGS) $(CFLAGSPEC) $(LIBRARY_PATH) $(LIBRARIES) -c $< -o $@
 
-#linux/%.o : %.cpp
-#	gcc -O3 -c $(CFLAGS) $(CFLAGSPEC) $(LIBRARY_PATH) $(LIBRARIES) $*.cpp -o linux/$*.o
+linux/%.o : $(SRCDIR)/%.cpp
+	gcc -O3 -c $(CFLAGS) $(CFLAGSPEC) $(LIBRARY_PATH) $(LIBRARIES) $< -o linux/$*.o
 
 
 clean:

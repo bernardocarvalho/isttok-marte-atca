@@ -532,8 +532,9 @@ bool WaveformGAM::Execute(GAM_FunctionNumbers functionNumber){
 */
 /*
 	*** WaveformMode ***
-	1 -> direct
+	1 -> current control
 	2 -> scenario (position, plasma current etc..)
+	8 -> MIMO / by now also current control 
 */
 /*
 	*** Plasma Direction ***
@@ -542,6 +543,7 @@ bool WaveformGAM::Execute(GAM_FunctionNumbers functionNumber){
 */
 	if(functionNumber == GAMOnline){
 		
+
 		if (inputstruct[0].WaveformMode == 1 && inputstruct[0].PlasmaDirection == 1 && inputstruct[0].DischargeStatus == 1){
 			if (waveform_1_p_available) outputstruct[0].WaveformOutput = this->waveform_1_p->GetWaveformValue(inputstruct[0].usecDischargeTime);
 			else {
@@ -549,7 +551,7 @@ bool WaveformGAM::Execute(GAM_FunctionNumbers functionNumber){
 				 outputstruct[0].WaveformOutput = 0;
 			}
 		}
-		else if (inputstruct[0].WaveformMode == 2 && inputstruct[0].PlasmaDirection == 1 && inputstruct[0].DischargeStatus == 1){
+		else if ((inputstruct[0].WaveformMode == 2 || inputstruct[0].WaveformMode == 8 ) && inputstruct[0].PlasmaDirection == 1 && inputstruct[0].DischargeStatus == 1){
 			if (waveform_2_p_available) outputstruct[0].WaveformOutput = this->waveform_2_p->GetWaveformValue(inputstruct[0].usecDischargeTime);
 			else {
 				 AssertErrorCondition(InitialisationError,"WaveformGAM:: %s ERROR waveform_2_p was requested and is not available",this->Name());
@@ -577,7 +579,7 @@ bool WaveformGAM::Execute(GAM_FunctionNumbers functionNumber){
 				 outputstruct[0].WaveformOutput = 0;
 			}
 		}
-		else if (inputstruct[0].WaveformMode == 2 && inputstruct[0].PlasmaDirection == 0 && inputstruct[0].DischargeStatus == 1){
+		else if ((inputstruct[0].WaveformMode == 2 || inputstruct[0].WaveformMode == 8 ) && inputstruct[0].PlasmaDirection == 0 && inputstruct[0].DischargeStatus == 1){
 			if (waveform_2_n_available) outputstruct[0].WaveformOutput = this->waveform_2_n->GetWaveformValue(inputstruct[0].usecDischargeTime);
 			else {
 				 AssertErrorCondition(InitialisationError,"WaveformGAM:: %s ERROR waveform_2_n was requested and is not available",this->Name());
@@ -597,7 +599,7 @@ bool WaveformGAM::Execute(GAM_FunctionNumbers functionNumber){
 				 AssertErrorCondition(InitialisationError,"WaveformGAM:: %s ERROR waveform_inversion_negative_to_positive was requested and is not available",this->Name());
 				 outputstruct[0].WaveformOutput = 0;
 			}
-		}
+		}		
 		else	outputstruct[0].WaveformOutput = 0;
 	}
 	else	outputstruct[0].WaveformOutput = 0;

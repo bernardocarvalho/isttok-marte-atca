@@ -1,6 +1,5 @@
-
 #define AUTO_PID_SOFT_LIMIT 10
-#define AUTO_PID_MEDIUM_LIMIT 20 
+#define AUTO_PID_MEDIUM_LIMIT 20
 
 #include "ControllerGAM.h"
 
@@ -27,7 +26,7 @@ ControllerGAM::~ControllerGAM()
 
 //{ ********* Initialise the module ********************************
 bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
-   
+
 	CDBExtended cdb(cdbData);
 	int i;
 
@@ -152,11 +151,11 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s interferometry_radial_control_bool",this->Name());
 		return False;
 	}
-	else 
+	else
 	{
 		interferometry_radial_control_bool = (bool)i;
 		AssertErrorCondition(Information,"ControllerGAM::Initialise: interferometry_radial_control_bool = %d",interferometry_radial_control_bool);
-	}	
+	}
 	if(!cdb.ReadFloat(puffing_duration_in_puffing_feedback_in_ms, "puffing_duration_in_puffing_feedback_in_ms"))
 	{
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s puffing_duration_in_puffing_feedback_in_ms",this->Name());
@@ -424,13 +423,13 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		CDB_move_to[17].Printf("time");
 		CDB_move_to[18].Printf("discharge_status");
 		for (i=0;i<number_of_signals_to_read;i++){
-			
+
 			if(!cdb->Move(CDB_move_to[i].Buffer()))
 			{
 				AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s Could not move to \"%s\"",this->Name(),CDB_move_to[i].Buffer());
 				return False;
 			}
-			
+
 			if(cdb->Exists("SignalType"))
 			{
 				FString signalName;
@@ -441,15 +440,15 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 				FString SignalName;
 				cdb.ReadFString(SignalName, "SignalName");
 				AssertErrorCondition(Information,"ControllerGAM::Initialise: Added signal = %s", SignalName.Buffer());
-				
+
 				if(!this->SignalsInputInterface->AddSignal(SignalName.Buffer(), SignalType[i].Buffer()))
 				{
 					AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s failed to add signal", this->Name());
 					return False;
 				}
 			}
-			
-			
+
+
 			cdb->MoveToFather();
 		}
 
@@ -462,8 +461,8 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s Could not move to \"output_signals\"",this->Name());
 		return False;
 	}
-	
-		number_of_signals_to_read = 5;
+
+		number_of_signals_to_read = 7;
 		CDB_move_to = new FString[number_of_signals_to_read];
 		SignalType = new FString[number_of_signals_to_read];
 		CDB_move_to[0].Printf("output_horizontal");
@@ -471,14 +470,16 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		CDB_move_to[2].Printf("output_primary");
 		CDB_move_to[3].Printf("output_Puffing");
 		CDB_move_to[4].Printf("output_Toroidal");
+		CDB_move_to[5].Printf("R_recons");
+		CDB_move_to[6].Printf("Z_recons");
 		for (i=0;i<number_of_signals_to_read;i++){
-			
+
 			if(!cdb->Move(CDB_move_to[i].Buffer()))
 			{
 				AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s Could not move to \"%s\"",this->Name(),CDB_move_to[i].Buffer());
 				return False;
 			}
-			
+
 			if(cdb->Exists("SignalType"))
 			{
 				FString signalName;
@@ -489,7 +490,7 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 				FString SignalName;
 				cdb.ReadFString(SignalName, "SignalName");
 				AssertErrorCondition(Information,"ControllerGAM::Initialise: Added signal = %s", SignalName.Buffer());
-				
+
 				if(!this->SignalsOutputInterface->AddSignal(SignalName.Buffer(), SignalType[i].Buffer()))
 				{
 					AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: %s failed to add signal", this->Name());
@@ -501,8 +502,8 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 
 	cdb->MoveToFather();
 
-	
-//	READ control file	
+
+//	READ control file
 	File temp_file;
 	FString file_to_read;
 	ConfigurationDataBase file_cdb;
@@ -522,14 +523,14 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 
 	file_cdb->ReadFromStream(temp_file);
 	CDBExtended cdbe(file_cdb);
-	
+
 	temp_max_dim = 2;
 
 	if (!cdbe->GetArrayDims(A_matrix_dims,temp_max_dim,"A_matrix",CDBAIM_Strict)){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: Could not get A_matrix dimension");
 		temp_file.Close();
 		return False;
-	} 
+	}
 	if (temp_max_dim != 2 || A_matrix_dims[0] == 0 || A_matrix_dims[1] == 0){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: A_matrix dimension != 2");
 		temp_file.Close();
@@ -541,13 +542,13 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		temp_file.Close();
 		return False;
 	}
-	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded A_matrix matrix size = %d , %d", A_matrix_dims[0],A_matrix_dims[1]);	 
+	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded A_matrix matrix size = %d , %d", A_matrix_dims[0],A_matrix_dims[1]);
 
 	if (!cdbe->GetArrayDims(B_matrix_dims,temp_max_dim,"B_matrix",CDBAIM_Strict)){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: Could not get B_matrix dimension");
 		temp_file.Close();
 		return False;
-	} 
+	}
 	if (temp_max_dim != 2 || B_matrix_dims[0] == 0 || B_matrix_dims[1] == 0){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: B_matrix dimension != 2");
 		temp_file.Close();
@@ -559,13 +560,13 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		temp_file.Close();
 		return False;
 	}
-	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded B_matrix matrix size = %d , %d", B_matrix_dims[0],B_matrix_dims[1]);	 
+	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded B_matrix matrix size = %d , %d", B_matrix_dims[0],B_matrix_dims[1]);
 
 	if (!cdbe->GetArrayDims(C_matrix_dims,temp_max_dim,"C_matrix",CDBAIM_Strict)){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: Could not get C_matrix dimension");
 		temp_file.Close();
 		return False;
-	} 
+	}
 	if (temp_max_dim != 2 || C_matrix_dims[0] == 0 || C_matrix_dims[1] == 0){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: C_matrix dimension != 2");
 		temp_file.Close();
@@ -577,13 +578,13 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		temp_file.Close();
 		return False;
 	}
-	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded C_matrix matrix size = %d , %d", C_matrix_dims[0],C_matrix_dims[1]);	 
+	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded C_matrix matrix size = %d , %d", C_matrix_dims[0],C_matrix_dims[1]);
 
 	if (!cdbe->GetArrayDims(D_matrix_dims,temp_max_dim,"D_matrix",CDBAIM_Strict)){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: Could not get D_matrix dimension");
 		temp_file.Close();
 		return False;
-	} 
+	}
 	if (temp_max_dim != 2 || D_matrix_dims[0] == 0 || D_matrix_dims[1] == 0){
 		AssertErrorCondition(InitialisationError,"ControllerGAM::Initialise: D_matrix dimension != 2");
 		temp_file.Close();
@@ -595,16 +596,35 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 		temp_file.Close();
 		return False;
 	}
-	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded D_matrix matrix size = %d , %d", D_matrix_dims[0],D_matrix_dims[1]);	 
-	
-	temp_file.Close();
-	
-	this->PID_time_constant = usecthread_cycle_time / 1000000;
- 
-	this->horizontal_position_PID = new IPID(this->PID_horizontal_proportional_normal, this->PID_horizontal_integral_normal, this->PID_horizontal_derivative_normal,this->usecthread_cycle_time, this->maximum_vertical_current, this->minimum_vertical_current );
-	this->vertical_position_PID = new IPID(this->PID_vertical_proportional_normal, this->PID_vertical_integral_normal, this->PID_vertical_derivative_normal,this->usecthread_cycle_time, this->maximum_horizontal_current, this->minimum_horizontal_current);
-	this->primary_plasma_current_PID = new IPID(this->PID_primary_proportional_normal, this->PID_primary_integral_normal, this->PID_primary_derivative_normal,this->usecthread_cycle_time, this->maximum_primary_current, this->minimum_primary_current );
+	else AssertErrorCondition(Information,"ControllerGAM::Initialise: successfully loaded D_matrix matrix size = %d , %d", D_matrix_dims[0],D_matrix_dims[1]);
 
+	temp_file.Close();
+
+	this->PID_time_constant = usecthread_cycle_time / 1000000;
+	this->PID_time_constant=0.0001;
+
+	this->horizontal_position_PID = new IPID(this->PID_horizontal_proportional_normal, this->PID_horizontal_integral_normal, this->PID_horizontal_derivative_normal,this->PID_time_constant, this->maximum_vertical_current, this->minimum_vertical_current );
+	this->vertical_position_PID = new IPID(this->PID_vertical_proportional_normal, this->PID_vertical_integral_normal, this->PID_vertical_derivative_normal,this->PID_time_constant, this->maximum_horizontal_current, this->minimum_horizontal_current);
+	this->primary_plasma_current_PID = new IPID(this->PID_primary_proportional_normal, this->PID_primary_integral_normal, this->PID_primary_derivative_normal,this->PID_time_constant, this->maximum_primary_current, this->minimum_primary_current );
+
+	// Chamar construtor do  LQR
+
+	this->Kalman_LQR_var = new LQR();
+
+	this->CentroidPos.Kalman_R=0;
+	this->CentroidPos.Kalman_Z=0;
+	this->CentroidPos.X_est=(float[10]){0, 0,0,0,0,0,0,0,0,0};
+	this->LQRcurrents.Ivert=0.0;
+	this->LQRcurrents.Ihor=0.0;
+
+	this-> Radial_pos=0;
+	this-> Vertical_pos=0;
+	this-> IVertical=0;
+	this-> IHorizontal=0;
+	this-> changeDetec=0;
+	this-> firstcycle=0;
+	this-> SendToVer_buff=0;
+	this-> SendToHor_buff=0;
 
 	puffing_duration_in_puffing_feedback_in_us = int(puffing_duration_in_puffing_feedback_in_ms * 1000);
 	maximum_idle_time_in_puffing_feedback_in_us = int(maximum_idle_time_in_puffing_feedback_in_ms * 1000);
@@ -621,8 +641,10 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 	old_HorizontalWaveformMode = 0;
 	old_DischargeStatus = -1;
 
-	//AssertErrorCondition(Information,"ControllerGAM::Initialise: puffing change per cycle = %d ", puffing_feedback_usec_change_per_cycle);	 
-	
+
+
+	//AssertErrorCondition(Information,"ControllerGAM::Initialise: puffing change per cycle = %d ", puffing_feedback_usec_change_per_cycle);
+
     return True;
 }
 //} ******************************************************************
@@ -631,16 +653,23 @@ bool ControllerGAM::Initialise(ConfigurationDataBase& cdbData){
 
 //{ ********* Execute the module functionalities *******************
 bool ControllerGAM::Execute(GAM_FunctionNumbers functionNumber){
- 
+
 
 	InputInterfaceStruct *inputstruct = (InputInterfaceStruct *) this->SignalsInputInterface->Buffer();
 	this->SignalsInputInterface->Read();
 //	AssertErrorCondition(InitialisationError,"ControllerGAM:: %s inputstruct = %f %f %f %f %f %f %f %f %f %f %f %d %d %d %d ",this->Name(), inputstruct[0].PrimaryCurrent, inputstruct[0].HorizontalCurrent, inputstruct[0].VerticalCurrent, inputstruct[0].PrimaryOutputWaveform, inputstruct[0].HorizontalOutputWaveform, inputstruct[0].VerticalOutputWaveform, inputstruct[0].PlasmaCurrent, inputstruct[0].PositionR, inputstruct[0].PositionZ, inputstruct[0].Density, inputstruct[0].InterferometryR, inputstruct[0].PrimaryWaveformMode, inputstruct[0].HorizontalWaveformMode, inputstruct[0].VerticalWaveformMode, inputstruct[0].usecTime);
-		
+
 	OutputInterfaceStruct *outputstruct = (OutputInterfaceStruct *) this->SignalsOutputInterface->Buffer();
 
+
+	Radial_pos= inputstruct[0].PositionR;
+	Vertical_pos= inputstruct[0].PositionZ;
+	IVertical= inputstruct[0].VerticalCurrent;
+	IHorizontal= inputstruct[0].HorizontalCurrent;
+
+
 /* **** WaveformModes of operation *****
-	0 -> off  
+	0 -> off
 	1 -> current control
 	2 -> position soft
 	3 -> position medium
@@ -673,57 +702,90 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 		outputstruct[0].SendToPrimaryValue = 0;
 		outputstruct[0].SendToPuffing = 0;
 		outputstruct[0].SendToToroidal = 0;
+		outputstruct[0].R_recons=0;
+		outputstruct[0].Z_recons=0;
 	}
-	
+
 	if(functionNumber == GAMOnline){
-		
+
+
+
+
 		if (inputstruct[0].DischargeStatus >=0 ){
-			
-			
+
+
+//////// Get initial conditions
+/*
+if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750 ) {
+	if(this->firstcycle== 0){
+			int ivo;
+			ivo = this->Kalman_LQR_var->erase(Radial_pos, Vertical_pos);
+	        this->firstcycle =1;}
+	}
+else if ( inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750){
+	if(this->firstcycle== 0){
+			int ivo;
+			ivo = this->Kalman_LQR_var->erase(Radial_pos, Vertical_pos);
+	        this->firstcycle =1;}
+	}	else{this->firstcycle =0;}
+*/
+	//////////////////////////////////////
+
+
 			if (inputstruct[0].PrimaryWaveformMode == 7 || inputstruct[0].HorizontalWaveformMode == 7 || inputstruct[0].VerticalWaveformMode == 7){
-								
+
+				float temp;
+
 				outputstruct[0].SendToPrimaryValue = inputstruct[0].PrimaryCurrent;
-				outputstruct[0].SendToVerticalValue = inputstruct[0].VerticalCurrent;
-				outputstruct[0].SendToHorizontalValue = inputstruct[0].HorizontalCurrent;
-				
+				this->SendToVer_buff = inputstruct[0].VerticalCurrent;
+				this->SendToHor_buff = inputstruct[0].HorizontalCurrent;
+
 				old_PrimaryWaveformMode = 7;
 				old_VerticalWaveformMode = 7;
 				old_HorizontalWaveformMode = 7;
+
+				// bumpless condition to -1
+				 temp =	 this->horizontal_position_PID->CalculatePID_vert(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000),2,-1);
+				temp =	 this->vertical_position_PID->CalculatePID_hor(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000),2,-1);
+
+
 			}
-				
+
 			else if (inputstruct[0].PrimaryWaveformMode == 6 || inputstruct[0].HorizontalWaveformMode == 6 || inputstruct[0].VerticalWaveformMode == 6){
-				
+
 				//integrated control
 				if (inputstruct[0].PlasmaCurrent < inputstruct[0].PrimaryOutputWaveform) outputstruct[0].SendToPrimaryValue += (this->maximum_primary_current - this->minimum_primary_current)/400;
-				else outputstruct[0].SendToPrimaryValue -= (this->maximum_primary_current - this->minimum_primary_current)/400;	
+				else outputstruct[0].SendToPrimaryValue -= (this->maximum_primary_current - this->minimum_primary_current)/400;
 
 				if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750){
-				
-					if (inputstruct[0].PositionR > (inputstruct[0].VerticalOutputWaveform/1000)) outputstruct[0].SendToVerticalValue += (this->maximum_vertical_current - this->minimum_vertical_current )/200;
-					else outputstruct[0].SendToVerticalValue -= (this->maximum_vertical_current - this->minimum_vertical_current )/200;
-					if (inputstruct[0].PositionZ > (inputstruct[0].HorizontalOutputWaveform/1000)) outputstruct[0].SendToHorizontalValue -= (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
-					else outputstruct[0].SendToHorizontalValue += (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
+
+					if (inputstruct[0].PositionR > (inputstruct[0].VerticalOutputWaveform/1000)) this->SendToVer_buff += (this->maximum_vertical_current - this->minimum_vertical_current )/200;
+					else this->SendToVer_buff -= (this->maximum_vertical_current - this->minimum_vertical_current )/200;
+					if (inputstruct[0].PositionZ > (inputstruct[0].HorizontalOutputWaveform/1000)) this->SendToHor_buff -= (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
+					else this->SendToHor_buff += (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
 				}
 				if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent > -750){
-					if (inputstruct[0].PositionR < (inputstruct[0].VerticalOutputWaveform/1000)) outputstruct[0].SendToVerticalValue += (this->maximum_vertical_current - this->minimum_vertical_current )/200;
-					else outputstruct[0].SendToVerticalValue -= (this->maximum_vertical_current - this->minimum_vertical_current )/200;
-					if (inputstruct[0].PositionZ < (inputstruct[0].HorizontalOutputWaveform/1000)) outputstruct[0].SendToHorizontalValue -= (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
-					else outputstruct[0].SendToHorizontalValue += (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
+					if (inputstruct[0].PositionR < (inputstruct[0].VerticalOutputWaveform/1000)) this->SendToVer_buff += (this->maximum_vertical_current - this->minimum_vertical_current )/200;
+					else this->SendToVer_buff -= (this->maximum_vertical_current - this->minimum_vertical_current )/200;
+					if (inputstruct[0].PositionZ < (inputstruct[0].HorizontalOutputWaveform/1000)) this->SendToHor_buff -= (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
+					else this->SendToHor_buff += (this->maximum_horizontal_current-this->minimum_horizontal_current)/1000;
 				}
 
 				if ( outputstruct[0].SendToPrimaryValue > this->maximum_primary_current ) outputstruct[0].SendToPrimaryValue = this->maximum_primary_current;
 				if ( outputstruct[0].SendToPrimaryValue < this->minimum_primary_current ) outputstruct[0].SendToPrimaryValue = this->minimum_primary_current;
-				if ( outputstruct[0].SendToVerticalValue > this->maximum_vertical_current ) outputstruct[0].SendToVerticalValue = this->maximum_vertical_current;
-				if ( outputstruct[0].SendToVerticalValue < this->minimum_horizontal_current ) outputstruct[0].SendToVerticalValue = this->minimum_horizontal_current;
-				if ( outputstruct[0].SendToHorizontalValue > this->maximum_horizontal_current ) outputstruct[0].SendToHorizontalValue = this->maximum_horizontal_current;
-				if ( outputstruct[0].SendToHorizontalValue < this->minimum_horizontal_current ) outputstruct[0].SendToHorizontalValue = this->minimum_horizontal_current;
+				if ( this->SendToVer_buff > this->maximum_vertical_current ) this->SendToVer_buff = this->maximum_vertical_current;
+				if ( this->SendToVer_buff < this->minimum_horizontal_current ) this->SendToVer_buff = this->minimum_horizontal_current;
+				if ( this->SendToHor_buff > this->maximum_horizontal_current ) this->SendToHor_buff = this->maximum_horizontal_current;
+				if ( this->SendToHor_buff < this->minimum_horizontal_current ) this->SendToHor_buff = this->minimum_horizontal_current;
 				old_PrimaryWaveformMode = 6;
 				old_VerticalWaveformMode = 6;
 				old_HorizontalWaveformMode = 6;
 			}
-			else {
+			else { //// the big else
+
+
 				if (inputstruct[0].PrimaryWaveformMode == 5){
-					
+
 					// decide wich PID to use based on the current error
 					temp_requested_output = this->primary_plasma_current_PID->ReturnErrorInPercentage(inputstruct[0].PlasmaCurrent, inputstruct[0].PrimaryOutputWaveform);
 					if (temp_requested_output < AUTO_PID_SOFT_LIMIT) this->primary_plasma_current_PID->SetPIDConstants(this->PID_primary_proportional_soft, this->PID_primary_integral_soft, this->PID_primary_derivative_soft, this->usecthread_cycle_time);
@@ -731,9 +793,9 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					else this->primary_plasma_current_PID->SetPIDConstants(this->PID_primary_proportional_hard, this->PID_primary_integral_hard, this->PID_primary_derivative_hard, this->usecthread_cycle_time);
 
 					if(old_PrimaryWaveformMode > 5 || old_PrimaryWaveformMode < 2 ) this->primary_plasma_current_PID->LoadOldOutputWithinLimits(inputstruct[0].PrimaryCurrent);
-					
+
 					outputstruct[0].SendToPrimaryValue = this->primary_plasma_current_PID->CalculatePID(inputstruct[0].PlasmaCurrent,inputstruct[0].PrimaryOutputWaveform);
-	
+
 					old_PrimaryWaveformMode = 5;
 				}
 				if (inputstruct[0].VerticalWaveformMode == 5){
@@ -743,17 +805,17 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					if (temp_requested_output < AUTO_PID_SOFT_LIMIT) this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_soft, this->PID_vertical_integral_soft, this->PID_vertical_derivative_soft, this->usecthread_cycle_time);
 					else if (temp_requested_output < AUTO_PID_MEDIUM_LIMIT) this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_normal, this->PID_vertical_integral_normal, this->PID_vertical_derivative_normal, this->usecthread_cycle_time);
 					else this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_hard, this->PID_vertical_integral_hard, this->PID_vertical_derivative_hard, this->usecthread_cycle_time);
-														
+
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
-					
+
 					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
+						this->SendToVer_buff = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
+						this->SendToVer_buff = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
-	
+
 					old_VerticalWaveformMode = 5;
 				}
 				if (inputstruct[0].HorizontalWaveformMode == 5){
@@ -765,41 +827,41 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					else this->vertical_position_PID->SetPIDConstants(this->PID_horizontal_proportional_hard, this->PID_horizontal_integral_hard, this->PID_horizontal_derivative_hard, this->usecthread_cycle_time);
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
-					
+
 						if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-							outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
+							this->SendToHor_buff = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 						}
 						if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-							outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
+							this->SendToHor_buff = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 						}
 						// else: keep the output (no changes)
 
 					old_HorizontalWaveformMode = 5;
 				}
 				if (inputstruct[0].PrimaryWaveformMode == 4){
-						
+
 					if(old_PrimaryWaveformMode != 4) this->primary_plasma_current_PID->SetPIDConstants(this->PID_primary_proportional_hard, this->PID_primary_integral_hard, this->PID_primary_derivative_hard, this->usecthread_cycle_time);
 
 					if(old_PrimaryWaveformMode > 5 || old_PrimaryWaveformMode < 2 ) this->primary_plasma_current_PID->LoadOldOutputWithinLimits(inputstruct[0].PrimaryCurrent);
-					
+
 					outputstruct[0].SendToPrimaryValue = this->primary_plasma_current_PID->CalculatePID(inputstruct[0].PlasmaCurrent,inputstruct[0].PrimaryOutputWaveform);
-	
+
 					old_PrimaryWaveformMode = 4;
 				}
 				if (inputstruct[0].VerticalWaveformMode == 4){
 
 					if(old_VerticalWaveformMode != 4) this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_hard, this->PID_vertical_integral_hard, this->PID_vertical_derivative_hard, this->usecthread_cycle_time);
-				
+
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
-					
+
 					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
+						this->SendToVer_buff = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
+						this->SendToVer_buff = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
-	
+
 					old_VerticalWaveformMode = 4;
 				}
 				if (inputstruct[0].HorizontalWaveformMode == 4){
@@ -807,41 +869,41 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					if(old_HorizontalWaveformMode != 4) this->vertical_position_PID->SetPIDConstants(this->PID_horizontal_proportional_hard, this->PID_horizontal_integral_hard, this->PID_horizontal_derivative_hard, this->usecthread_cycle_time);
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
-					
+
 					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
+						this->SendToHor_buff = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
+						this->SendToHor_buff = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					// else: keep the output (no changes)
-	
+
 					old_HorizontalWaveformMode = 4;
 				}
 				if (inputstruct[0].PrimaryWaveformMode == 3){
-						
+
 					if(old_PrimaryWaveformMode != 3) this->primary_plasma_current_PID->SetPIDConstants(this->PID_primary_proportional_normal, this->PID_primary_integral_normal, this->PID_primary_derivative_normal, this->usecthread_cycle_time);
 
 					if(old_PrimaryWaveformMode > 5 || old_PrimaryWaveformMode < 2 ) this->primary_plasma_current_PID->LoadOldOutputWithinLimits(inputstruct[0].PrimaryCurrent);
-					
+
 					outputstruct[0].SendToPrimaryValue = this->primary_plasma_current_PID->CalculatePID(inputstruct[0].PlasmaCurrent,inputstruct[0].PrimaryOutputWaveform);
-	
+
 					old_PrimaryWaveformMode = 3;
 				}
 				if (inputstruct[0].VerticalWaveformMode == 3){
 
 					if(old_VerticalWaveformMode != 3) this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_normal, this->PID_vertical_integral_normal, this->PID_vertical_derivative_normal, this->usecthread_cycle_time);
-				
+
 					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
-					
+
 					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
+						this->SendToVer_buff = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
+						this->SendToVer_buff = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
 					}
 					// else: keep the output (no changes)
-	
+
 					old_VerticalWaveformMode = 3;
 				}
 				if (inputstruct[0].HorizontalWaveformMode == 3){
@@ -849,75 +911,126 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					if(old_HorizontalWaveformMode != 3) this->vertical_position_PID->SetPIDConstants(this->PID_horizontal_proportional_normal, this->PID_horizontal_integral_normal, this->PID_horizontal_derivative_normal, this->usecthread_cycle_time);
 
 					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
-					
+
 					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
+						this->SendToHor_buff = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
+						this->SendToHor_buff = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
 					}
 					// else: keep the output (no changes)
-	
+
 					old_HorizontalWaveformMode = 3;
 				}
 				if (inputstruct[0].PrimaryWaveformMode == 2){
-						
+
 					if(old_PrimaryWaveformMode != 2) this->primary_plasma_current_PID->SetPIDConstants(this->PID_primary_proportional_soft, this->PID_primary_integral_soft, this->PID_primary_derivative_soft, this->usecthread_cycle_time);
 
 					if(old_PrimaryWaveformMode > 5 || old_PrimaryWaveformMode < 2 ) this->primary_plasma_current_PID->LoadOldOutputWithinLimits(inputstruct[0].PrimaryCurrent);
-					
+
 					outputstruct[0].SendToPrimaryValue = this->primary_plasma_current_PID->CalculatePID(inputstruct[0].PlasmaCurrent,inputstruct[0].PrimaryOutputWaveform);
-	
+
 					old_PrimaryWaveformMode = 2;
 				}
-	 			if (inputstruct[0].VerticalWaveformMode == 2){
 
-					if(old_VerticalWaveformMode != 2) this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_soft, this->PID_vertical_integral_soft, this->PID_vertical_derivative_soft, this->usecthread_cycle_time);
-				
-					if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
-					
-					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
-					}
-					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToVerticalValue = this->horizontal_position_PID->CalculatePID(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000));
+
+				///////////////////// LQR  /////////////////////////////////////////////
+
+				if (inputstruct[0].VerticalWaveformMode == 8 && inputstruct[0].HorizontalWaveformMode == 8){
+                       /// Positive current
+					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 1000 && inputstruct[0].DischargeStatus==1) {
+						this-> LQRcurrents= this->Kalman_LQR_var->MIMO_CONTROL_POSITIVE((inputstruct[0].VerticalOutputWaveform/1000),inputstruct[0].HorizontalOutputWaveform/1000, inputstruct[0].PositionR, inputstruct[0].PositionZ, inputstruct[0].VerticalCurrent, inputstruct[0].HorizontalCurrent);
+
+						//this-> LQRcurrents= this->Kalman_LQR_var->MIMO_CONTROL_POSITIVE((inputstruct[0].VerticalOutputWaveform/1000),inputstruct[0].HorizontalOutputWaveform/1000, inputstruct[0].PositionR, inputstruct[0].PositionZ, SendToVer_buff, SendToHor_buff);
+
+						this->SendToVer_buff = this->LQRcurrents.Ivert;
+						this->SendToHor_buff =this->LQRcurrents.Ihor;
+
+
+											}
+					     /// Negative current
+					if (inputstruct[0].PrimaryCurrent < 50 && inputstruct[0].PlasmaCurrent < -1000 && inputstruct[0].DischargeStatus==1) {
+						this-> LQRcurrents= this->Kalman_LQR_var->MIMO_CONTROL_NEGATIVE((inputstruct[0].VerticalOutputWaveform/1000), inputstruct[0].HorizontalOutputWaveform/1000, inputstruct[0].PositionR, inputstruct[0].PositionZ, inputstruct[0].VerticalCurrent, inputstruct[0].HorizontalCurrent);
+
+						//this-> LQRcurrents= this->Kalman_LQR_var->MIMO_CONTROL_NEGATIVE((inputstruct[0].VerticalOutputWaveform/1000), inputstruct[0].HorizontalOutputWaveform/1000, inputstruct[0].PositionR, inputstruct[0].PositionZ, SendToVer_buff, SendToHor_buff);
+
+						this->SendToVer_buff =this->LQRcurrents.Ivert;
+						this->SendToHor_buff =this->LQRcurrents.Ihor;
+
+
 					}
 					// else: keep the output (no changes)
-	
-					old_VerticalWaveformMode = 2;
-				}
-				if (inputstruct[0].HorizontalWaveformMode == 2){
+					//// Limitações
 
-					if(old_HorizontalWaveformMode != 2) this->vertical_position_PID->SetPIDConstants(this->PID_horizontal_proportional_soft, this->PID_horizontal_integral_soft, this->PID_horizontal_derivative_soft, this->usecthread_cycle_time);
+						if ( this->SendToVer_buff > this->maximum_vertical_current ) this->SendToVer_buff = this->maximum_vertical_current;
+						if ( this->SendToVer_buff < this->minimum_vertical_current ) this->SendToVer_buff = this->minimum_vertical_current;
+						if ( this->SendToHor_buff > this->maximum_horizontal_current ) this->SendToHor_buff = this->maximum_horizontal_current;
+						if ( this->SendToHor_buff < this->minimum_horizontal_current ) this->SendToHor_buff = this->minimum_horizontal_current;
 
-					if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
-					
-					if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -750) {
-						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000, 1);
-					}
-					if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) {
-						outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID_types(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000, 1);
-					}
-					// else: keep the output (no changes)
-	
-					old_HorizontalWaveformMode = 2;
+					old_VerticalWaveformMode = 8;
+					old_HorizontalWaveformMode = 8;
 				}
+
+				/////////////// This else is in case someone is selecting MIMO just for one of the currents (Vertical or Horizontal) .. PID will be execute for both
+	 			else {
+					if (inputstruct[0].VerticalWaveformMode == 2 || inputstruct[0].VerticalWaveformMode == 8){
+
+						if(old_VerticalWaveformMode != 2) this->horizontal_position_PID->SetPIDConstants(this->PID_vertical_proportional_soft, this->PID_vertical_integral_soft, this->PID_vertical_derivative_soft, this->usecthread_cycle_time);
+
+						if(old_VerticalWaveformMode > 5 || old_VerticalWaveformMode < 2 ) this->horizontal_position_PID->LoadOldOutputWithinLimits((inputstruct[0].VerticalCurrent));
+
+						if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 850) {
+
+							//this->SendToVer_buff = this->horizontal_position_PID->CalculatePID((2 *(inputstruct[0].VerticalOutputWaveform/1000) - inputstruct[0].PositionR),(inputstruct[0].VerticalOutputWaveform/1000));
+							this->SendToVer_buff = this->horizontal_position_PID->CalculatePID_vert(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000),2,0);
+						}
+						if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -850) {
+							this->SendToVer_buff = this->horizontal_position_PID->CalculatePID_vert(inputstruct[0].PositionR,(inputstruct[0].VerticalOutputWaveform/1000),1,0);
+						}
+						// else: keep the output (no changes)
+
+						old_VerticalWaveformMode = 2;
+					}
+					if (inputstruct[0].HorizontalWaveformMode == 2 || inputstruct[0].HorizontalWaveformMode == 8){
+
+						if(old_HorizontalWaveformMode != 2) this->vertical_position_PID->SetPIDConstants(this->PID_horizontal_proportional_soft, this->PID_horizontal_integral_soft, this->PID_horizontal_derivative_soft, this->usecthread_cycle_time);
+
+						if(old_HorizontalWaveformMode > 5 || old_HorizontalWaveformMode < 2 ) this->vertical_position_PID->LoadOldOutputWithinLimits(inputstruct[0].HorizontalCurrent);
+
+						if (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent < -900) {
+
+							//outputstruct[0].SendToHorizontalValue = this->vertical_position_PID->CalculatePID((2 * inputstruct[0].HorizontalOutputWaveform/1000 - inputstruct[0].PositionZ), inputstruct[0].HorizontalOutputWaveform/1000);
+							this->SendToHor_buff = this->vertical_position_PID->CalculatePID_hor( inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000,2,0);
+						}
+						if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 900) {
+							this->SendToHor_buff = this->vertical_position_PID->CalculatePID_hor(inputstruct[0].PositionZ, inputstruct[0].HorizontalOutputWaveform/1000,1,0);
+						}
+						// else: keep the output (no changes)
+
+						old_HorizontalWaveformMode = 2;
+					}
+				}
+
+
+
+
+				/////////// Current control
 				if (inputstruct[0].PrimaryWaveformMode == 1 || inputstruct[0].PrimaryWaveformMode == 8){
-					
+
 					outputstruct[0].SendToPrimaryValue = inputstruct[0].PrimaryOutputWaveform;
-					
+
 					old_PrimaryWaveformMode = 1;
 				}
-				if (inputstruct[0].VerticalWaveformMode == 1 || inputstruct[0].VerticalWaveformMode == 8){
-				
-					outputstruct[0].SendToVerticalValue = inputstruct[0].VerticalOutputWaveform;
-					
+				if (inputstruct[0].VerticalWaveformMode == 1 ){
+
+					this->SendToVer_buff = inputstruct[0].VerticalOutputWaveform;
+
 					old_VerticalWaveformMode = 1;
 				}
-				if (inputstruct[0].HorizontalWaveformMode == 1 || inputstruct[0].HorizontalWaveformMode == 8){
-					
-					outputstruct[0].SendToHorizontalValue = inputstruct[0].HorizontalOutputWaveform;
-					
+				if (inputstruct[0].HorizontalWaveformMode == 1 ){
+
+					this->SendToHor_buff = inputstruct[0].HorizontalOutputWaveform;
+
 					old_HorizontalWaveformMode = 1;
 				}
 				if (inputstruct[0].PrimaryWaveformMode == 0){
@@ -926,21 +1039,21 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					old_PrimaryWaveformMode = 0;
 				}
 				if (inputstruct[0].VerticalWaveformMode == 0){
-					
-					outputstruct[0].SendToVerticalValue = 0;
+
+					this->SendToVer_buff = 0;
 					old_VerticalWaveformMode = 0;
 				}
 				if (inputstruct[0].HorizontalWaveformMode == 0){
 
-					outputstruct[0].SendToHorizontalValue = 0;
+					this->SendToHor_buff = 0;
 					old_HorizontalWaveformMode = 0;
 				}
 			}
 
 		}
 		else {			//GAM online but discharge status < 0
-			outputstruct[0].SendToHorizontalValue = 0;
-			outputstruct[0].SendToVerticalValue = 0;
+			this->SendToHor_buff = 0;
+			this->SendToVer_buff = 0;
 			outputstruct[0].SendToPrimaryValue = 0;
 			outputstruct[0].SendToPuffing = 0;
 			outputstruct[0].SendToToroidal = 0;
@@ -950,21 +1063,21 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 		if (inputstruct[0].DischargeStatus == 0) outputstruct[0].SendToPuffing = (float) inputstruct[0].PuffingOutputWaveform;// discharge started, lasts until end of breakdown
 
 		if (inputstruct[0].DischargeStatus > 0){ // inputstruct[0].DischargeStatus == 1 -> timewindows, inputstruct[0].DischargeStatus == 2 -> inversion
-			
+
 			if ( puffing_mode == 2 || puffing_mode == 4){ //puffing feedback
-				
+
 				if (old_DischargeStatus < 1){  // transition from breakdown to time-windows
-					
+
 					puffing_feedback_last_usectime = inputstruct[0].usecTime;
 					puffing_feedback_usectime_to_change = minimum_idle_time_in_puffing_feedback_in_us;
 					puffing_feedback_currently_off = True;
 				}
 				else {  // during time window operation
-					
+
 					if (puffing_feedback_currently_off) {
-						
+
 						if ( puffing_feedback_last_usectime + puffing_feedback_usectime_to_change < inputstruct[0].usecTime){
-							
+
 	// AssertErrorCondition(InitialisationError,"ControllerGAM::!!! RT info, apagar!!! puffing usec to change  = %d HAlpha = %f waveform = %f",puffing_feedback_usectime_to_change, inputstruct[0].HAlpha, inputstruct[0].PuffingOutputWaveform);
 							puffing_feedback_last_usectime = inputstruct[0].usecTime;
 							puffing_feedback_currently_off = False;
@@ -975,7 +1088,7 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 							if ( inputstruct[0].PuffingOutputWaveform > inputstruct[0].Density) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change - puffing_feedback_usec_change_per_cycle;
 							if ( puffing_feedback_usectime_to_change > maximum_idle_time_in_puffing_feedback_in_us ) puffing_feedback_usectime_to_change = maximum_idle_time_in_puffing_feedback_in_us;
 							if ( puffing_feedback_usectime_to_change < minimum_idle_time_in_puffing_feedback_in_us ) puffing_feedback_usectime_to_change = minimum_idle_time_in_puffing_feedback_in_us;
-						} 
+						}
 						if(puffing_feedback_mode == 2 && ((inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 750) || (inputstruct[0].PrimaryCurrent < -25 && inputstruct[0].PlasmaCurrent > -750))) {		// feedback in h-alpha
 							if ( inputstruct[0].PuffingOutputWaveform < inputstruct[0].HAlpha) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change + puffing_feedback_usec_change_per_cycle;
 							if ( inputstruct[0].PuffingOutputWaveform > inputstruct[0].HAlpha) puffing_feedback_usectime_to_change = puffing_feedback_usectime_to_change - puffing_feedback_usec_change_per_cycle;
@@ -985,20 +1098,20 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 					}
 					else {
 						if ( puffing_feedback_last_usectime + puffing_duration_in_puffing_feedback_in_us < inputstruct[0].usecTime){
-							
+
 							puffing_feedback_last_usectime = inputstruct[0].usecTime;
 							puffing_feedback_currently_off = True;
 						}
 					}
-					
+
 				}
-				
+
 				if (puffing_feedback_currently_off) outputstruct[0].SendToPuffing = minimum_puffing_output; // turn puffing off
 				if (!puffing_feedback_currently_off && inputstruct[0].PrimaryCurrent >= 45 ) outputstruct[0].SendToPuffing = maximum_puffing_output;
 				if (!puffing_feedback_currently_off && inputstruct[0].PrimaryCurrent <= -45) outputstruct[0].SendToPuffing = maximum_puffing_output;
 				if (inputstruct[0].PrimaryCurrent < 45 && inputstruct[0].PrimaryCurrent >-45)outputstruct[0].SendToPuffing = minimum_puffing_output;
-				
-				
+
+
 			}
 			if (puffing_mode == 1 || puffing_mode == 3) outputstruct[0].SendToPuffing = (float) inputstruct[0].PuffingOutputWaveform;
 
@@ -1007,9 +1120,65 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 		if ( puffing_mode == 0) outputstruct[0].SendToPuffing = 0;
 //		if ( puffing_mode == 3) outputstruct[0].SendToPuffing = (float) inputstruct[0].PuffingOutputWaveform;
 		outputstruct[0].SendToToroidal = (float) inputstruct[0].ToroidalOutputWaveform;
-	}	
-		
-	
+	}
+
+
+/////////////////////////// Kalman Filtering //////////////////////////
+
+
+if (inputstruct[0].PrimaryCurrent > 25 && inputstruct[0].PlasmaCurrent > 1000 && inputstruct[0].DischargeStatus==1 ) {
+	//
+
+	if(this->changeDetec == 0){
+		int ivo;
+		ivo = this->Kalman_LQR_var->erase(Radial_pos, Vertical_pos);
+		this->changeDetec =1;
+		}
+
+	this-> CentroidPos= this->Kalman_LQR_var->KALMAN_FILTER_POS(Radial_pos, Vertical_pos,SendToVer_buff, SendToHor_buff, 1);
+	//this-> CentroidPos= this->Kalman_LQR_var->KALMAN_FILTER_POS(Radial_pos, Vertical_pos,inputstruct[0].VerticalCurrent, inputstruct[0].HorizontalCurrent, 1);
+
+	//this->CentroidPos.Kalman_R=0.05;
+	//this->CentroidPos.Kalman_Z=0.05;
+
+
+
+} else if ( inputstruct[0].PrimaryCurrent < 50 &&  inputstruct[0].PlasmaCurrent < -1000  && inputstruct[0].DischargeStatus==1 )  {
+	//
+
+	if(this->changeDetec == 0){
+		int ivo;
+		ivo = this->Kalman_LQR_var->erase(Radial_pos, Vertical_pos);
+		this->changeDetec =1;
+		}
+
+	//this-> CentroidPos= this->Kalman_LQR_var->KALMAN_FILTER_NEG(Radial_pos, Vertical_pos, inputstruct[0].VerticalCurrent, inputstruct[0].HorizontalCurrent, 1);
+	this-> CentroidPos= this->Kalman_LQR_var->KALMAN_FILTER_NEG(Radial_pos, Vertical_pos, SendToVer_buff, SendToHor_buff, 1);
+
+	//this->CentroidPos.Kalman_R=0.05;
+	//this->CentroidPos.Kalman_Z=0.05;
+
+
+
+}
+	else{
+		this-> CentroidPos= this->Kalman_LQR_var->KALMAN_FILTER_NEG(0, 0, 0, 0, 0);
+		this->changeDetec =0;
+	}
+
+		outputstruct[0].R_recons=this->CentroidPos.Kalman_R;
+		outputstruct[0].Z_recons=this->CentroidPos.Kalman_Z;
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+/////// SendTo Vertical e Horizontal
+
+	 outputstruct[0].SendToVerticalValue = this->SendToVer_buff;
+	 outputstruct[0].SendToHorizontalValue = this->SendToHor_buff;
+/////////////////////
+
 	old_DischargeStatus = inputstruct[0].DischargeStatus;
 
 //	outputstruct[0].SendToVerticalValue = (float) inputstruct[0].PlasmaCurrent;
@@ -1017,10 +1186,10 @@ NOT USED FOR NOW      vertical field PS - radial position controller (auto)
 	this->SignalsOutputInterface->Write();
 
 
-	return True;		
+	return True;
 }
 bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
-	
+
 	HtmlStream hmStream(hStream);
 	int i;
 	hmStream.SSPrintf(HtmlTagStreamMode, "html>\n\
@@ -1042,7 +1211,7 @@ bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
         hStream.Switch((uint32)0);
     }
 	if(submit_view.Size() > 0) view_input_variables = True;
-	
+
 	FString submit_hide;
     submit_hide.SetSize(0);
     if (hStream.Switch("InputCommands.submit_hide")){
@@ -1057,7 +1226,7 @@ bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
 		hmStream.SSPrintf(HtmlTagStreamMode, "input type=\"submit\" name=\"submit_view\" value=\"View input variables\"");
 	}
 	else {
-		hmStream.SSPrintf(HtmlTagStreamMode, "input type=\"submit\" name=\"submit_hide\" value=\"Hide input variables\"");		
+		hmStream.SSPrintf(HtmlTagStreamMode, "input type=\"submit\" name=\"submit_hide\" value=\"Hide input variables\"");
 		hmStream.SSPrintf(HtmlTagStreamMode, "br><br>interferometry_radial_control_bool = %d\n\
 		<br>PID_horizontal_proportional_soft = %.2f\n\
 		<br>PID_horizontal_proportional_normal = %.2f\n\
@@ -1096,7 +1265,7 @@ bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
 			hmStream.SSPrintf(HtmlTagStreamMode, "/tr");
 		}
 		hmStream.SSPrintf(HtmlTagStreamMode, "/table><br");
-		
+
 		hmStream.SSPrintf(HtmlTagStreamMode, "br><b>B_matrix</b>\n<table border=\"1\"");
 		for (j=0;j<B_matrix_dims[0];j++){
 			hmStream.SSPrintf(HtmlTagStreamMode, "tr");
@@ -1104,7 +1273,7 @@ bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
 			hmStream.SSPrintf(HtmlTagStreamMode, "/tr");
 		}
 		hmStream.SSPrintf(HtmlTagStreamMode, "/table><br");
-		
+
 		hmStream.SSPrintf(HtmlTagStreamMode, "br><b>C_matrix</b>\n<table border=\"1\"");
 		for (j=0;j<C_matrix_dims[0];j++){
 			hmStream.SSPrintf(HtmlTagStreamMode, "tr");
@@ -1112,7 +1281,7 @@ bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
 			hmStream.SSPrintf(HtmlTagStreamMode, "/tr");
 		}
 		hmStream.SSPrintf(HtmlTagStreamMode, "/table><br");
-		
+
 		hmStream.SSPrintf(HtmlTagStreamMode, "br><b>D_matrix</b>\n<table border=\"1\"");
 		for (j=0;j<D_matrix_dims[0];j++){
 			hmStream.SSPrintf(HtmlTagStreamMode, "tr");
@@ -1128,5 +1297,5 @@ bool ControllerGAM::ProcessHttpMessage(HttpStream &hStream){
 	hStream.WriteReplyHeader(True);
 
 
-	return True;		
+	return True;
 }
